@@ -7,9 +7,6 @@ class SearchTab:
         self.frame = Frame(self.master)
         self.frame.pack()
 
-        self.label = Label(self.frame, text="Search Tab")
-        self.label.pack()
-
         self.button = Button(self.frame, text="Click Me", command=self.click)
         self.button.pack()
 
