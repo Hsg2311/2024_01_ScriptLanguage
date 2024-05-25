@@ -7,26 +7,18 @@ from MemoTab import *
 from LogTab import *
 
 from GIFAnimation import *
+import GuiConfig
 
 class MainGUI:
-    GIF_WIDTH = 150
-    GIF_HEIGHT = 100
-    GIF_PADDINGX = 20
-    GIF_PADDINGY = 10
-    TABS_PADDINGX = 20
-    TABS_PADDINGY = 20
-
-    WIDTH = 800
-    HEIGHT = 600
-
     def __init__(self):
         self.master = Tk()
         self.master.title("Main GUI")
-        self.master.geometry(str(MainGUI.WIDTH) + "x" + str(MainGUI.HEIGHT))
+        self.master.geometry(str(GuiConfig.WIDTH) + "x" + str(GuiConfig.HEIGHT))
+        GuiConfig.initFonts()
 
         self.notebook = ttk.Notebook(self.master)
         self.notebook.pack( fill=BOTH, expand=True, side=LEFT,
-            padx=MainGUI.TABS_PADDINGX, pady=MainGUI.TABS_PADDINGY
+            padx=GuiConfig.TABS_PADDINGX, pady=GuiConfig.TABS_PADDINGY
         )
 
         self.searchTab = SearchTab(self.master)
@@ -41,11 +33,11 @@ class MainGUI:
         self.logTab = LogTab(self.master)
         self.notebook.add(self.logTab.frame, text="열람 기록")
 
-        self.gif = GIFAnimation(MainGUI.GIF_WIDTH, MainGUI.GIF_HEIGHT)
+        self.gif = GIFAnimation(GuiConfig.GIF_WIDTH, GuiConfig.GIF_HEIGHT)
         self.gifLabel = Label(self.master, image=self.gif.image())
         self.gifLabel.place(
-            x=MainGUI.WIDTH - MainGUI.GIF_PADDINGX, y=MainGUI.GIF_PADDINGY,
-            anchor=NE, width=MainGUI.GIF_WIDTH, height=MainGUI.GIF_HEIGHT
+            x=GuiConfig.WIDTH - GuiConfig.GIF_PADDINGX, y=GuiConfig.GIF_PADDINGY,
+            anchor=NE, width=GuiConfig.GIF_WIDTH, height=GuiConfig.GIF_HEIGHT
         )
 
         self.master.after(100, self.updateGIF)
