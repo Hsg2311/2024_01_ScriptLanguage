@@ -45,7 +45,11 @@ class MemoTab:
 
         self.memos = []
         self.memoCnt = 0
-    
+
+        self.gmailIcon = PhotoImage(file="res/gmail.PNG")
+        self.gmailIcon = self.gmailIcon.subsample(4, 4)
+        self.telegramIcon = PhotoImage(file="res/telegram.PNG")
+        self.telegramIcon = self.telegramIcon.subsample(7, 7)
 
         for i in range(len(self.memos)):
             self.memos[i].grid(i // MemoTab.CNT_IN_A_ROW, i % MemoTab.CNT_IN_A_ROW)
@@ -56,10 +60,10 @@ class MemoTab:
         self.delButton = Button(self.frame, text="-", command=self.delMemo)
         self.delButton.place(x=700, y=90, width=60, height=50)
 
-        self.mailButton = Button(self.frame, text="Mail", command=self.mail)
+        self.mailButton = Button(self.frame, command=self.mail, image=self.gmailIcon)
         self.mailButton.place(x=700, y=200, width=60, height=50)
 
-        self.sendButton = Button(self.frame, text="Send", command=self.send)
+        self.sendButton = Button(self.frame, command=self.send, image=self.telegramIcon)
         self.sendButton.place(x=700, y=260, width=60, height=50)
 
     def addMemo(self):
