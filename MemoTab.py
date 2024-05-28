@@ -7,11 +7,17 @@ class MemoTab:
         self.frame = Frame(self.master)
         self.frame.pack()
 
-        self.label = Label(self.frame, text="Memo Tab")
-        self.label.pack()
+        self.grids = Frame(self.frame)
+        self.grids.place(x=10, y=10, width=680, height=580)
 
-        self.button = Button(self.frame, text="Click Me", command=self.click)
-        self.button.pack()
+        self.memos = []
 
-    def click(self):
-        messagebox.showinfo("Memo Tab", "You clicked the button in the Memo Tab")
+        for i in range(5):
+            for j in range(5):
+                tmp = Entry(self.grids)
+                tmp.grid(row=i, column=j, padx=10, pady=10, sticky="nsew")
+                self.memos.append(tmp)
+
+        for i in range(5):
+            self.grids.grid_rowconfigure(i, weight=1)
+            self.grids.grid_columnconfigure(i, weight=1)
