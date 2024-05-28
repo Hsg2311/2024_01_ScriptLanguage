@@ -1,5 +1,4 @@
 from tkinter import *
-from tkinter import messagebox
 
 class Memo:
     WIDTH = 28  # number of characters
@@ -74,7 +73,31 @@ class MemoTab:
         
 
     def mail(self):
-        pass
+        MailDialog(self.master)
 
     def send(self):
         pass
+
+class MailDialog:
+    def __init__(self, master):
+        self.master = master
+        self.window = Toplevel(self.master)
+        self.window.title("Mail")
+        
+        self.entries = []
+
+        labels_texts = ["Sender Address", "Recipient Address", "Title", "Sender Password"]
+        for i, text in enumerate(labels_texts):
+            label = Label(self.window, text=text)
+            label.grid(row=i, column=0, padx=10, pady=5, sticky="e")
+            
+            entry = Entry(self.window)
+            entry.grid(row=i, column=1, padx=10, pady=5, sticky="w")
+            self.entries.append(entry)
+
+        submit_button = Button(self.window, text="Submit", command=self.submit)
+        submit_button.grid(row=len(labels_texts), columnspan=2, pady=10)
+
+    def submit(self):
+        values = [entry.get() for entry in self.entries]
+        print(values)
