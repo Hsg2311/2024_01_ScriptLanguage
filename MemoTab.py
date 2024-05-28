@@ -37,9 +37,9 @@ class MemoTab:
 
     def __init__(self, master):
         self.master = master
+        self.master.protocol("WM_DELETE_WINDOW", self.onClosing)
         self.frame = Frame(self.master)
         self.frame.pack()
-
         self.grids = Frame(self.frame)
         self.grids.place(x=10, y=10, width=680, height=580)
 
@@ -65,6 +65,13 @@ class MemoTab:
 
         self.sendButton = Button(self.frame, command=self.send, image=self.telegramIcon)
         self.sendButton.place(x=700, y=260, width=60, height=50)
+
+    def onClosing(self):
+        for memo in self.memos:
+            memo.update()
+
+        messagebox.showinfo("MemoTab", "MemoTab is destroyed")
+        self.master.destroy()
 
     def addMemo(self):
         self.memos.append(Memo(self.grids))
