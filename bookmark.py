@@ -8,6 +8,8 @@ class Node:
         node.parent = self
 
     def delete(self, node):
+        if node not in self.children:
+            return
         self.children.remove(node)
         node.parent = None
 
@@ -65,5 +67,17 @@ if __name__ == "__main__":
     b6 = BookmarkItem("Paper6")
 
     c3.insert(b6)
+
+    traverse(r)
+
+    #test delete
+    c1.delete(b1)
+    r.delete(c2)
+
+    traverse(r)
+
+    #test destroy
+    c3.destroy()
+    b2.destroy()
 
     traverse(r)
