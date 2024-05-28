@@ -40,11 +40,15 @@ class MemoTab:
     def __init__(self, master):
         self.master = master
         self.master.protocol("WM_DELETE_WINDOW", self.onClosing)
-    
+
         self.frame = Frame(self.master)
         self.frame.pack()
-        self.grids = Frame(self.frame)
-        self.grids.place(x=10, y=10, width=680, height=580)
+        self.canvas = Canvas(self.frame)
+        self.canvas.place(x=10, y=10, width=680, height=580)
+        self.grids = Frame(self.canvas)
+        self.grids.pack(fill=BOTH, expand=True)
+
+        self.hasScroll = False
 
         self.memos = []
         self.memoCnt = 0
@@ -54,7 +58,7 @@ class MemoTab:
         self.telegramIcon = PhotoImage(file="res/telegram.PNG")
         self.telegramIcon = self.telegramIcon.subsample(7, 7)
 
-        self.onOpening(None)
+        self.loadXML()
 
         self.addButton = Button(self.frame, text="+", command=self.addMemo)
         self.addButton.place(x=700, y=40, width=60, height=50)
@@ -68,7 +72,7 @@ class MemoTab:
         self.sendButton = Button(self.frame, command=self.send, image=self.telegramIcon)
         self.sendButton.place(x=700, y=260, width=60, height=50)
 
-    def onOpening(self, event):
+    def loadXML(self):
         try:
             doc = minidom.parse("memo.xml")
             memos = doc.getElementsByTagName("memo")
@@ -77,6 +81,8 @@ class MemoTab:
                 self.memos.append(Memo(self.grids, text))
                 self.memos[-1].grid(i // MemoTab.CNT_IN_A_ROW, i % MemoTab.CNT_IN_A_ROW)
                 self.memoCnt += 1
+
+            self.adjustScrollbar()
         except:
             pass
 
@@ -96,7 +102,6 @@ class MemoTab:
 
         print(saveDoc.toprettyxml(), file=open("memo.xml", "w", encoding="utf-8"))
 
-        # messagebox.showinfo("MemoTab", "MemoTab is destroyed")
         self.master.destroy()
 
     def addMemo(self):
@@ -104,6 +109,7 @@ class MemoTab:
         self.memos[-1].grid(self.memoCnt // MemoTab.CNT_IN_A_ROW, self.memoCnt % MemoTab.CNT_IN_A_ROW)
 
         self.memoCnt += 1
+        self.adjustScrollbar()
 
     def delMemo(self):
         toDelWidget = self.grids.focus_get()
@@ -119,13 +125,32 @@ class MemoTab:
 
         toDelWidget.grid_forget()
         self.memoCnt -= 1
-
         self.memos.remove(toDel)
 
         # rearrange grid
         for i in range(self.memoCnt):
             self.memos[i].grid(i // MemoTab.CNT_IN_A_ROW, i % MemoTab.CNT_IN_A_ROW)
+
+        self.adjustScrollbar()
+
+
+    def adjustScrollbar(self):
+        self.frame.update()
+
+        if self.memoCnt > 4 * MemoTab.CNT_IN_A_ROW:
+            if not self.hasScroll:
+                self.scroll = Scrollbar(self.frame, orient=VERTICAL, command=self.canvas.yview)
+                self.canvas.config(yscrollcommand=self.scroll.set)
+                self.hasScroll = True
+                self.scroll.place(x=680, y=10, height=580)
+        else:
+            if self.hasScroll:
+                self.scroll.place_forget()
+                self.hasScroll = False
         
+        self.canvas.delete("grid")
+        self.canvas.create_window((0, 0), window=self.grids, anchor="nw", tags="grid")
+        self.canvas.config(scrollregion=self.grids.bbox("all"))
 
     def mail(self):
         toMailWidget = self.grids.focus_get()
