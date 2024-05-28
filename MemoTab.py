@@ -14,7 +14,12 @@ class Memo:
     def grid(self, i, j):
         self.widget.grid(row=i, column=j, padx=10, pady=10)
 
+    def owns(self, widget):
+        return self.widget == widget
+
 class MemoTab:
+    CNT_IN_A_ROW = 3
+
     def __init__(self, master):
         self.master = master
         self.frame = Frame(self.master)
@@ -23,14 +28,12 @@ class MemoTab:
         self.grids = Frame(self.frame)
         self.grids.place(x=10, y=10, width=680, height=580)
 
-        self.memos = [
-            [Memo(self.grids, 'Memo 1'), Memo(self.grids, 'Memo 2'), Memo(self.grids, 'Memo 3')],
-            [Memo(self.grids, 'Memo 6'), Memo(self.grids, 'Memo 7')]
-        ]
+        self.memos = []
+        self.memoCnt = 0
+    
 
         for i in range(len(self.memos)):
-            for j in range(len(self.memos[i])):
-                self.memos[i][j].grid(i, j)
+            self.memos[i].grid(i // MemoTab.CNT_IN_A_ROW, i % MemoTab.CNT_IN_A_ROW)
 
         self.addButton = Button(self.frame, text="+", command=self.addMemo)
         self.addButton.place(x=700, y=40, width=60, height=50)
@@ -45,10 +48,30 @@ class MemoTab:
         self.sendButton.place(x=700, y=260, width=60, height=50)
 
     def addMemo(self):
-        pass
+        self.memos.append(Memo(self.grids))
+        self.memos[-1].grid(self.memoCnt // MemoTab.CNT_IN_A_ROW, self.memoCnt % MemoTab.CNT_IN_A_ROW)
+
+        self.memoCnt += 1
 
     def delMemo(self):
-        pass
+        toDel = self.grids.focus_get()
+
+        if toDel == None:
+            return
+
+        toDel.grid_forget()
+        self.memoCnt -= 1
+
+        # remove memo
+        for i in range(self.memoCnt):
+            if self.memos[i].owns(toDel):
+                del self.memos[i]
+                break
+
+        # rearrange grid
+        for i in range(self.memoCnt):
+            self.memos[i].grid(i // MemoTab.CNT_IN_A_ROW, i % MemoTab.CNT_IN_A_ROW)
+        
 
     def mail(self):
         pass
