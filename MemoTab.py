@@ -13,6 +13,8 @@ class Memo:
         self.master = master
         self.text = text
         self.widget = Text(self.master, width = Memo.WIDTH, height = Memo.HEIGHT)
+        self.widget.bind("<FocusIn>", self.on_focus_in)
+        self.widget.bind("<FocusOut>", self.on_focus_out)
         self.widget.insert(END, self.text)
 
     def update(self):
@@ -23,6 +25,12 @@ class Memo:
 
     def owns(self, widget):
         return self.widget == widget
+    
+    def on_focus_in(self, event):
+        self.widget.config(bg="light gray")
+    
+    def on_focus_out(self, event):
+        self.widget.config(bg="white")
 
 class MemoTab:
     CNT_IN_A_ROW = 3
