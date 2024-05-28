@@ -1,4 +1,9 @@
 from tkinter import *
+from tkinter import messagebox
+
+# smtp 정보
+host = "smtp.gmail.com" # Gmail SMTP 서버 주소.
+port = "587"
 
 class Memo:
     WIDTH = 28  # number of characters
@@ -9,6 +14,9 @@ class Memo:
         self.text = text
         self.widget = Text(self.master, width = Memo.WIDTH, height = Memo.HEIGHT)
         self.widget.insert(END, self.text)
+
+    def update(self):
+        self.text = self.widget.get("1.0", END) # read from line 1, character 0 to the end
 
     def grid(self, i, j):
         self.widget.grid(row=i, column=j, padx=10, pady=10)
@@ -55,7 +63,7 @@ class MemoTab:
     def delMemo(self):
         toDel = self.grids.focus_get()
 
-        if toDel == None:
+        if toDel == None or not isinstance(toDel, Text):
             return
 
         toDel.grid_forget()
@@ -73,13 +81,27 @@ class MemoTab:
         
 
     def mail(self):
-        MailDialog(self.master)
+        toMail = self.grids.focus_get()
+        print(toMail)
+        if toMail == None or not isinstance(toMail, Text):
+            messagebox.showinfo("Mail", "Select a memo to mail")
+            return
+        
+        for memo in self.memos:
+            if memo.owns(toMail):
+                memo.update()
+                MailDialog(memo, self.master)
 
     def send(self):
         pass
 
+import mysmtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
 class MailDialog:
-    def __init__(self, master):
+    def __init__(self, memo, master):
+        self.memo = memo
         self.master = master
         self.window = Toplevel(self.master)
         self.window.title("Mail")
@@ -100,4 +122,31 @@ class MailDialog:
 
     def submit(self):
         values = [entry.get() for entry in self.entries]
-        print(values)
+        senderAddr, recipientAddr, title, passwd = values[:4]
+        
+        #Message container를 생성합니다.
+        msg = MIMEMultipart('alternative')
+
+        #set message
+        msg['Subject'] = title
+        msg['From'] = senderAddr
+        msg['To'] = recipientAddr
+        
+        msgPart = MIMEText(self.memo.text, 'plain')
+        print(self.memo.text)
+        
+        # 메세지에 생성한 MIME 문서를 첨부합니다.
+        msg.attach(msgPart)
+        
+        print ("connect smtp server ... ")
+        s = mysmtplib.MySMTP(host,port)
+        #s.set_debuglevel(1)
+        s.ehlo()
+        s.starttls()
+        s.ehlo()
+        s.login(senderAddr, passwd)    # 로긴을 합니다. 
+        s.sendmail(senderAddr , [recipientAddr], msg.as_string())
+        s.close()
+
+        messagebox.showinfo("Mail", "Mail sending complete.")
+        self.window.destroy()
