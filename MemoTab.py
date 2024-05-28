@@ -1,6 +1,8 @@
 from tkinter import *
 from tkinter import messagebox
 
+from xml.dom import minidom
+
 # smtp 정보
 host = "smtp.gmail.com" # Gmail SMTP 서버 주소.
 port = "587"
@@ -38,6 +40,7 @@ class MemoTab:
     def __init__(self, master):
         self.master = master
         self.master.protocol("WM_DELETE_WINDOW", self.onClosing)
+    
         self.frame = Frame(self.master)
         self.frame.pack()
         self.grids = Frame(self.frame)
@@ -51,8 +54,7 @@ class MemoTab:
         self.telegramIcon = PhotoImage(file="res/telegram.PNG")
         self.telegramIcon = self.telegramIcon.subsample(7, 7)
 
-        for i in range(len(self.memos)):
-            self.memos[i].grid(i // MemoTab.CNT_IN_A_ROW, i % MemoTab.CNT_IN_A_ROW)
+        self.onOpening(None)
 
         self.addButton = Button(self.frame, text="+", command=self.addMemo)
         self.addButton.place(x=700, y=40, width=60, height=50)
@@ -66,11 +68,35 @@ class MemoTab:
         self.sendButton = Button(self.frame, command=self.send, image=self.telegramIcon)
         self.sendButton.place(x=700, y=260, width=60, height=50)
 
+    def onOpening(self, event):
+        try:
+            doc = minidom.parse("memo.xml")
+            memos = doc.getElementsByTagName("memo")
+            for i, memo in enumerate(memos):
+                text = memo.firstChild.nodeValue
+                self.memos.append(Memo(self.grids, text))
+                self.memos[-1].grid(i // MemoTab.CNT_IN_A_ROW, i % MemoTab.CNT_IN_A_ROW)
+                self.memoCnt += 1
+        except:
+            pass
+
     def onClosing(self):
         for memo in self.memos:
             memo.update()
 
-        messagebox.showinfo("MemoTab", "MemoTab is destroyed")
+        saveDoc = minidom.Document()
+        memosElement = saveDoc.createElement("memos")
+        saveDoc.appendChild(memosElement)
+        
+        for i, memo in enumerate(self.memos):
+            memoElement = saveDoc.createElement("memo")
+            memoElement.setAttribute("id", str(i))
+            memoElement.appendChild(saveDoc.createTextNode(memo.text))
+            memosElement.appendChild(memoElement)
+
+        print(saveDoc.toprettyxml(), file=open("memo.xml", "w", encoding="utf-8"))
+
+        # messagebox.showinfo("MemoTab", "MemoTab is destroyed")
         self.master.destroy()
 
     def addMemo(self):
