@@ -61,19 +61,21 @@ class MemoTab:
         self.memoCnt += 1
 
     def delMemo(self):
-        toDel = self.grids.focus_get()
+        toDelWidget = self.grids.focus_get()
+        toDel = None
 
-        if toDel == None or not isinstance(toDel, Text):
+        for memo in self.memos:
+            if memo.owns(toDelWidget):
+                toDel = memo
+                break
+
+        if toDel == None:
             return
 
-        toDel.grid_forget()
+        toDelWidget.grid_forget()
         self.memoCnt -= 1
 
-        # remove memo
-        for i in range(self.memoCnt):
-            if self.memos[i].owns(toDel):
-                del self.memos[i]
-                break
+        self.memos.remove(toDel)
 
         # rearrange grid
         for i in range(self.memoCnt):
@@ -81,16 +83,20 @@ class MemoTab:
         
 
     def mail(self):
-        toMail = self.grids.focus_get()
-        print(toMail)
-        if toMail == None or not isinstance(toMail, Text):
+        toMailWidget = self.grids.focus_get()
+        
+        toMail = None
+        for memo in self.memos:
+            if memo.owns(toMailWidget):
+                toMail = memo
+                break
+
+        if toMail == None:
             messagebox.showinfo("Mail", "Select a memo to mail")
             return
-        
-        for memo in self.memos:
-            if memo.owns(toMail):
-                memo.update()
-                MailDialog(memo, self.master)
+
+        toMail.update()
+        MailDialog(toMail, self.master)
 
     def send(self):
         pass
@@ -133,12 +139,10 @@ class MailDialog:
         msg['To'] = recipientAddr
         
         msgPart = MIMEText(self.memo.text, 'plain')
-        print(self.memo.text)
         
         # 메세지에 생성한 MIME 문서를 첨부합니다.
         msg.attach(msgPart)
         
-        print ("connect smtp server ... ")
         s = mysmtplib.MySMTP(host,port)
         #s.set_debuglevel(1)
         s.ehlo()
