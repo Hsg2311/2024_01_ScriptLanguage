@@ -37,8 +37,9 @@ class Memo:
 class MemoTab:
     CNT_IN_A_ROW = 3
 
-    def __init__(self, master):
-        self.master = master
+    def __init__(self, mainGUI):
+        self.mainGUI = mainGUI
+        self.master = mainGUI.master
         self.master.protocol("WM_DELETE_WINDOW", self.onClosing)
 
         self.frame = Frame(self.master)

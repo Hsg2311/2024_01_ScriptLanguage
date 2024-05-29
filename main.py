@@ -5,6 +5,7 @@ from SearchTab import *
 from BookmarkTab import *
 from MemoTab import *
 from LogTab import *
+from ViewTab import *
 
 from GIFAnimation import *
 import GuiConfig
@@ -21,17 +22,22 @@ class MainGUI:
             padx=GuiConfig.TABS_PADDINGX, pady=GuiConfig.TABS_PADDINGY
         )
 
-        self.searchTab = SearchTab(self.master)
+        self.searchTab = SearchTab(self)
         self.notebook.add(self.searchTab.frame, text="검색")
 
-        self.bookmarkTab = BookmarkTab(self.master)
+        self.bookmarkTab = BookmarkTab(self)
         self.notebook.add(self.bookmarkTab.frame, text="북마크")
 
-        self.memoTab = MemoTab(self.master)
+        self.memoTab = MemoTab(self)
         self.notebook.add(self.memoTab.frame, text="메모")
 
-        self.logTab = LogTab(self.master)
+        self.logTab = LogTab(self)
         self.notebook.add(self.logTab.frame, text="열람 기록")
+
+        self.viewTab = ViewTab(self)
+        self.notebook.add(self.viewTab.frame, text="보기")
+
+        self.notebook.hide(self.viewTab.frame)
 
         self.gif = GIFAnimation(GuiConfig.GIF_WIDTH, GuiConfig.GIF_HEIGHT)
         self.gifLabel = Label(self.master, image=self.gif.image())

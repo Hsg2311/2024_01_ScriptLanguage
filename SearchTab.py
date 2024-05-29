@@ -7,8 +7,10 @@ from board import Board, Record
 import GuiConfig
 
 class SearchTab:
-    def __init__(self, master):
-        self.master = master
+    def __init__(self, mainGUI):
+        self.mainGUI = mainGUI
+        self.master = mainGUI.master
+
         self.frame = Frame(self.master)
         self.frame.pack()
 
@@ -130,4 +132,6 @@ class SearchTab:
         self.update()
 
     def view(self):
-        pass
+        self.mainGUI.notebook.select(
+            self.mainGUI.viewTab.frame
+        )
