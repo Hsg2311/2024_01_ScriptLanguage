@@ -2,34 +2,11 @@ from tkinter import *
 from tkinter import messagebox
 
 from tkinter import ttk
+from tkinter import simpledialog
 
 import bookmark
 
-testBookmarkRoot = bookmark.Category("Root")
-
-c1 = bookmark.Category("Category1")
-c2 = bookmark.Category("Category2")
-c3 = bookmark.Category("Category3")
-
-b1 = bookmark.BookmarkItem("Paper1")
-b2 = bookmark.BookmarkItem("Paper2")
-b3 = bookmark.BookmarkItem("Paper3")
-b4 = bookmark.BookmarkItem("Paper4")
-b5 = bookmark.BookmarkItem("Paper5")
-b6 = bookmark.BookmarkItem("Paper6")
-
-testBookmarkRoot.insert(c1)
-testBookmarkRoot.insert(c2)
-testBookmarkRoot.insert(c3)
-
-c1.insert(b1)
-c1.insert(b2)
-
-c2.insert(b3)
-c2.insert(b4)
-
-c3.insert(b5)
-c3.insert(b6)
+BookmarkRoot = bookmark.Category("Root")
 
 class BookmarkTab:
     def __init__(self, master):
@@ -37,7 +14,7 @@ class BookmarkTab:
         self.frame = Frame(self.master)
         self.frame.pack()
 
-        global testBookmarkRoot
+        global BookmarkRoot
         # show bookmark tree as treeview
         self.style = ttk.Style()
         self.style.configure('Treeview', font=('Helvetica', 14), rowheight=30)
@@ -45,7 +22,14 @@ class BookmarkTab:
         self.tree = ttk.Treeview(self.frame)
         self.tree.place(x=50, y=50, width=500, height=400)
 
-        self.insertNode(testBookmarkRoot)
+        self.addButton = Button(self.frame, text='+', command=self.addCategory)
+        self.addButton.place(x=600, y=150, width=50, height=50)
+        self.delButton = Button(self.frame, text='-', command=self.delCategory)
+        self.delButton.place(x=600, y=210, width=50, height=50)
+        self.ncButton = Button(self.frame, text='Modify', command=self.changeItemName)
+        self.ncButton.place(x=600, y=270, width=50, height=50)
+
+        # self.insertNode(BookmarkRoot)
         expandAllItems(self.tree)
 
     def insertNode(self, node, parent = None):
@@ -66,6 +50,26 @@ class BookmarkTab:
 
         for child in node.children:
             self.insertNode(child, node)
+
+    def addCategory(self):
+        name = simpledialog.askstring("카테고리 이름 설정", "카테고리 이름을 입력하세요:")
+        c = bookmark.Category(name)
+        self.insertNode(c)
+        global BookmarkRoot
+        BookmarkRoot.insert(c)
+
+    def delCategory(self):
+        selected_item = self.tree.selection()
+        if selected_item:
+            self.tree.delete(selected_item)
+
+    def changeItemName(self):
+        selected_items = self.tree.selection()
+        if selected_items:  # 선택된 아이템이 있는지 확인
+            new_name = simpledialog.askstring("카테고리 이름 변경", "새 이름을 입력하세요:")
+            if new_name:  # 사용자가 이름을 입력하고 'OK'를 누른 경우
+                for item in selected_items:
+                    self.tree.item(item, text=new_name)  # 선택된 아이템의 이름을 새로운 이름으로 변경
 
 def expandAllItems(tree, item=''):
     for child in tree.get_children(item):
