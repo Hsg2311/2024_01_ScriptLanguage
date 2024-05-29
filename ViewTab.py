@@ -143,6 +143,10 @@ class ViewTab:
         self.initWidgets()
 
     def openDOI(self):
+        if self.paper is None:
+            messagebox.showinfo("DOI", "DOI를 열 논문이 없습니다.")
+            return
+
         if self.paper.doi is not None:
             webbrowser.open(self.paper.doi)
         elif self.paper.url is not None:
@@ -154,7 +158,21 @@ class ViewTab:
         pass
 
     def memo(self):
-        pass
+        if self.paper is None:
+            messagebox.showinfo("메모", "메모할 논문이 없습니다.")
+            return
+
+        memoStr='\n\n[Paper] ' + ' | '.join(
+            [self.paper.title, self.paper.author, self.paper.year]
+        )
+
+        self.mainGUI.memoTab.addMemo(memoStr)
+        self.mainGUI.notebook.select(self.mainGUI.memoTab.frame)
+        self.mainGUI.notebook.hide(self.frame)
 
     def summarize(self):
+        if self.paper is None:
+            messagebox.showinfo("요약", "요약할 논문이 없습니다.")
+            return
+        
         messagebox.showinfo("요약", self.summarizer.summarize(self.paper.title, self.paper.abstract))
