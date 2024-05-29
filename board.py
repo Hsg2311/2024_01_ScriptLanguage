@@ -2,6 +2,9 @@ from paper import Paper
 from xmlParsing import xmlParsing
 import papery
 
+from tkinter import *
+import GuiConfig
+
 class Board:
     PAGE_CNT_IN_A_TRAY = 10
     PAGE_CNT_IN_A_SEARCH = 30
@@ -16,6 +19,9 @@ class Board:
     def search(self, searchStr):
         self.searchRange(searchStr, 0, Board.PAGE_CNT_IN_A_SEARCH * Board.RECORD_CNT_IN_A_PAGE - 1)
 
+    def length(self):
+        return len(self.papers)
+
     # [start, end] is an 0-based inclusive range of indices
     # remote page referes to the XML's page
     def searchRange(self, searchStr, start, end):
@@ -24,7 +30,6 @@ class Board:
         remotePageStart = start // Board.SEARCH_UNIT + 1
         remotePageEnd = end // Board.SEARCH_UNIT + 1
 
-        print('searching...')
         self.papers = []
         parser = xmlParsing(papery.KEY, searchStr, papery.paperDataUrl,
             remotePageStart, Board.SEARCH_UNIT * (remotePageEnd - remotePageStart + 1)
@@ -58,6 +63,31 @@ class Board:
             raise ValueError('index out of range')
 
         return self.papers[ ((self.pageNum-1) % Board.PAGE_CNT_IN_A_SEARCH) * Board.RECORD_CNT_IN_A_PAGE + index ]
+
+class Record:
+    def __init__(self, paper, master):
+        self.paper = paper
+        self.master = master
+        self.widget = Text(self.master, font = GuiConfig.cFont, wrap=WORD)
+
+        recordStr = ' | '.join(
+            [paper.title, paper.author, paper.year]
+        )
+        self.widget.insert(END, recordStr)
+
+        self.widget.bind("<FocusIn>", self.on_focus_in)
+        self.widget.bind("<FocusOut>", self.on_focus_out)
+
+    def grid(self, i, j):
+        self.widget.grid(row=i, column=j, sticky='ew')
+
+    def on_focus_in(self, event):
+        self.widget.config(bg="light blue", fg='white')
+
+    def on_focus_out(self, event):
+        self.widget.config(bg="white", fg='black')
+
+
 
 
 if __name__ == '__main__':

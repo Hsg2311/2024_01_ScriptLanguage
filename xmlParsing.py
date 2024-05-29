@@ -39,7 +39,7 @@ class xmlParsing:
 
                 self.papers.append( Paper(
                     title=self.getTitle(arti),
-                    author=self.getAuthor(arti),
+                    author=', '.join( self.getAuthor(arti) ),
                     year=self.getPubYear(jour),
                     school='',
                     doi=self.getDOI(arti),
