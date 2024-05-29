@@ -1,5 +1,7 @@
 from tkinter import *
+from tkinter import messagebox
 import GuiConfig
+import webbrowser
 
 class ViewTab:
     def __init__(self, mainGUI):
@@ -139,7 +141,12 @@ class ViewTab:
         self.initWidgets()
 
     def openDOI(self):
-        pass
+        if self.paper.doi is not None:
+            webbrowser.open(self.paper.doi)
+        elif self.paper.url is not None:
+            webbrowser.open(self.paper.url)
+        else:
+            messagebox.showinfo("DOI", "DOI 혹은 URL 정보가 제공되지 않았습니다.")
 
     def translate(self):
         pass
