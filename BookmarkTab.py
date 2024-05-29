@@ -39,10 +39,14 @@ class BookmarkTab:
 
         global testBookmarkRoot
         # show bookmark tree as treeview
+        self.style = ttk.Style()
+        self.style.configure('Treeview', font=('Helvetica', 14), rowheight=30)
+
         self.tree = ttk.Treeview(self.frame)
-        self.tree.pack()
+        self.tree.place(x=50, y=50, width=500, height=400)
 
         self.insertNode(testBookmarkRoot)
+        expandAllItems(self.tree)
 
     def insertNode(self, node, parent = None):
         if isinstance(node, bookmark.Category):
@@ -62,3 +66,8 @@ class BookmarkTab:
 
         for child in node.children:
             self.insertNode(child, node)
+
+def expandAllItems(tree, item=''):
+    for child in tree.get_children(item):
+        tree.item(child, open=True)
+        expandAllItems(tree, child)
