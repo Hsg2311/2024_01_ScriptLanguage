@@ -2,8 +2,10 @@ from tkinter import *
 from tkinter import messagebox
 
 class BookmarkTab:
-    def __init__(self, master):
-        self.master = master
+    def __init__(self, mainGUI):
+        self.mainGUI = mainGUI
+        self.master = mainGUI.master
+        
         self.frame = Frame(self.master)
         self.frame.pack()
 
