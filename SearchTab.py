@@ -76,7 +76,7 @@ class SearchTab:
         # self.board.search(self.searchStr.get())
 
         # temporary implementation
-        self.board.loadCache()
+        self.board.loadCache(self.searchStr.get())
 
         self.update()
 
