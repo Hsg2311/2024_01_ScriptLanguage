@@ -3,46 +3,60 @@ from paper import Paper
 class Board:
     PAGE_CNT_IN_A_SEARCH = 10
     RECORD_CNT_IN_A_PAGE = 10
-    SEARCH_UNIT = 100
+    SEARCH_UNIT = 50
 
     def __init__(self):
         self.papers = []
         self.pageNum = 1
 
     def search(self, searchStr):
-        self.searchRemotePage(searchStr, 1)
+        self.searchRange(searchStr, 0, Board.PAGE_CNT_IN_A_SEARCH * Board.RECORD_CNT_IN_A_PAGE - 1)
 
+    # [start, end] is an 0-based inclusive range of indices
     # remote page referes to the XML's page
-    def searchRemotePage(self, searchStr, remotePageNum):
+    def searchRange(self, searchStr, start, end):
         # temporary implementation
-        self.papers=[Paper('sample'+str(i), 'jang', '2024') for i in range(
-            ( Board.PAGE_CNT_IN_A_SEARCH*Board.RECORD_CNT_IN_A_PAGE ) * remotePageNum
-        )]
+        remotePageStart = start // Board.SEARCH_UNIT + 1
+        remotePageEnd = end // Board.SEARCH_UNIT + 1
+
+        self.papers = []
+
+        for remotePageNum in range(remotePageStart, remotePageEnd+1):
+            self.papers.extend( [Paper('sample'+str(i), 'jang', '2024') for i in range(
+                Board.SEARCH_UNIT * (remotePageNum-1),
+                Board.SEARCH_UNIT * remotePageNum
+            ) ] )
 
     def selectPage(self, pageNum):
         self.pageNum = pageNum
 
     def nextPage(self):
         if self.pageNum % Board.PAGE_CNT_IN_A_SEARCH == 0:
-            self.searchRemotePage('sample',
-                self.pageNum * Board.RECORD_CNT_IN_A_PAGE // Board.SEARCH_UNIT + 1                      
+            print(len(self.papers))
+            self.searchRange('sample', self.pageNum * Board.RECORD_CNT_IN_A_PAGE,
+                (self.pageNum + Board.PAGE_CNT_IN_A_SEARCH) * Board.RECORD_CNT_IN_A_PAGE - 1
             )
+            print(len(self.papers))
 
         self.pageNum += 1
 
     def prevPage(self):
-        self.pageNum = max(self.pageNum - 1, 1)
+        self.pageNum -= 1
+        if self.pageNum < 1:
+            self.pageNum = 1
 
         if self.pageNum % Board.PAGE_CNT_IN_A_SEARCH == 0:
-            self.searchRemotePage('sample',
-                self.pageNum * Board.RECORD_CNT_IN_A_PAGE // Board.SEARCH_UNIT + 1
+            print(len(self.papers))
+            self.searchRange('sample', (self.pageNum - Board.PAGE_CNT_IN_A_SEARCH) * Board.RECORD_CNT_IN_A_PAGE,
+                self.pageNum * Board.RECORD_CNT_IN_A_PAGE - 1
             )
+            print(len(self.papers))
 
     def get(self, index):
         if not (0 <= index < Board.RECORD_CNT_IN_A_PAGE):
             raise ValueError('index out of range')
 
-        return self.papers[ (self.pageNum-1)*Board.RECORD_CNT_IN_A_PAGE + index ]
+        return self.papers[ ((self.pageNum-1) % Board.PAGE_CNT_IN_A_SEARCH) * Board.RECORD_CNT_IN_A_PAGE + index ]
 
 
 if __name__ == '__main__':
