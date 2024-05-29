@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import messagebox
 import GuiConfig
 import webbrowser
+from summary import Summarizer
 
 class ViewTab:
     def __init__(self, mainGUI):
@@ -14,6 +15,7 @@ class ViewTab:
         self.paper = None
         self.returnTab = None
         self.buttons = []
+        self.summarizer = Summarizer()
 
     def show(self, returnTab):
         self.returnTab = returnTab
@@ -155,4 +157,4 @@ class ViewTab:
         pass
 
     def summarize(self):
-        pass
+        messagebox.showinfo("요약", self.summarizer.summarize(self.paper.title, self.paper.abstract))
