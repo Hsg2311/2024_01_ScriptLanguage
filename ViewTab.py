@@ -91,10 +91,36 @@ class ViewTab:
         self.paperFrame.columnconfigure(0, weight=1)
 
         # configure buttons
+
+        # row 0 - return button
         self.buttons.append( Button(self.buttonsFrame, text="돌아가기",
             font=GuiConfig.cFont, command=self.goBack
         ) )
         self.buttons[-1].grid(row=0, column=0, sticky='nsew', pady=GuiConfig.WIDGET_INTERVALY)
+
+        # row 1 - doi(url) button
+        self.buttons.append( Button(self.buttonsFrame, text="DOI",
+            font=GuiConfig.cFont, command=self.openDOI
+        ) )
+        self.buttons[-1].grid(row=1, column=0, sticky='nsew', pady=GuiConfig.WIDGET_INTERVALY)
+
+        # row 2 - translation button
+        self.buttons.append( Button(self.buttonsFrame, text="번역",
+            font=GuiConfig.cFont, command=self.translate
+        ) )
+        self.buttons[-1].grid(row=2, column=0, sticky='nsew', pady=GuiConfig.WIDGET_INTERVALY)
+
+        # row 3 - memo button
+        self.buttons.append( Button(self.buttonsFrame, text="메모",
+            font=GuiConfig.cFont, command=self.memo
+        ) )
+        self.buttons[-1].grid(row=3, column=0, sticky='nsew', pady=GuiConfig.WIDGET_INTERVALY)
+
+        # row 4 - summarize button
+        self.buttons.append( Button(self.buttonsFrame, text="요약",
+            font=GuiConfig.cFont, command=self.summarize
+        ) )
+        self.buttons[-1].grid(row=4, column=0, sticky='nsew', pady=GuiConfig.WIDGET_INTERVALY)
 
         for i in range(len(self.buttons)):
             self.buttonsFrame.rowconfigure(i, weight=1)
@@ -111,3 +137,15 @@ class ViewTab:
         self.clear()
         self.paper = paper
         self.initWidgets()
+
+    def openDOI(self):
+        pass
+
+    def translate(self):
+        pass
+
+    def memo(self):
+        pass
+
+    def summarize(self):
+        pass
