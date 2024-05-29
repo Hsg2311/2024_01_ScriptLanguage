@@ -3,10 +3,12 @@ import xml.etree.ElementTree as ET
 import requests
 
 class xmlParsing:
-    def __init__(self, key, paperDataURL, parseCnt):
+    def __init__(self, apiKey, searchStr, paperDataURL, basePage, parseCnt):
         self.papers = []
-        self.key = key
+        self.searchStr = searchStr
+        self.key = apiKey
         self.paperDataURL = paperDataURL
+        self.basePage = basePage
         self.cnt = parseCnt
 
     def printPapers(self):
@@ -21,8 +23,11 @@ class xmlParsing:
             print()
 
     def parse(self):
-        for i in range(1, (self.cnt // 100) + 1):
-            paperDataParams = {'key' : self.key, 'apiCode' : 'articleSearch', 'title' : 1, 'page' : i, 'displayCount' : 100}
+        for i in range(0, self.cnt // 100):
+            paperDataParams = {'key' : self.key, 'apiCode' : 'articleSearch',
+                'title' : self.searchStr, 'page' : i + self.basePage,
+                'displayCount' : 100
+            }
             response = requests.get(self.paperDataURL, params=paperDataParams)
 
             root = ET.fromstring(response.text)
@@ -88,6 +93,7 @@ class xmlParsing:
         cnt = item.find('citation-count')
         return cnt.text
 
-parser = xmlParsing(papery.KEY, papery.paperDataUrl, 200)
-parser.parse()
-parser.printPapers()
+if __name__ == '__main__':
+    parser = xmlParsing(papery.KEY, "컴퓨터", papery.paperDataUrl, 1, 200)
+    parser.parse()
+    parser.printPapers()
