@@ -11,17 +11,42 @@ class xmlParsing:
         self.paperDataURL = paperDataURL
         self.basePage = basePage
         self.cnt = parseCnt
+        self.roots = []
 
-    def printPapers(self):
+    def printPapers(self, file=None):
         for paper in self.papers:
-            print('Year :', paper.year)
-            print('Title :', paper.title)
-            print('Author :', paper.author)
-            print('Abstract :', paper.abstract)
-            print('DOI :', paper.doi if paper.doi is not None else 'DOI 정보가 없습니다.')
-            print('URL :', paper.url if paper.url is not None else 'URL 정보가 없습니다.')
-            print('Citation Count :', paper.citationCnt)
-            print()
+            print('Year :', paper.year, file=file)
+            print('Title :', paper.title, file=file)
+            print('Author :', paper.author, file=file)
+            print('Abstract :', paper.abstract, file=file)
+            print('DOI :', paper.doi if paper.doi is not None else 'DOI 정보가 없습니다.', file=file)
+            print('URL :', paper.url if paper.url is not None else 'URL 정보가 없습니다.', file=file)
+            print('Citation Count :', paper.citationCnt, file=file)
+            print(file=file)
+
+    def parseFromXMLFile(self, xmlFile):
+        self.parseFromXMLStr(open(xmlFile, 'r', encoding='utf-8').read())
+
+    def parseFromXMLStr(self, xmlStr, buildNewRoot=True):
+        root = ET.fromstring(xmlStr)
+        if buildNewRoot:
+            self.roots.clear()
+        self.roots.append(root)
+
+        for item in root.iter('record'):
+            jour = item.find('journalInfo')
+            arti = item.find('articleInfo')
+
+            self.papers.append( Paper(
+                title=self.getTitle(arti),
+                author=', '.join( self.getAuthor(arti) ),
+                year=self.getPubYear(jour),
+                school='',
+                doi=self.getDOI(arti),
+                url=self.getURL(arti),
+                abstract=self.getAbstract(arti),
+                citationCnt=self.getCitationCount(arti)
+            ) )
 
     def parse(self):
         for i in range(0, self.cnt // 100):
@@ -30,23 +55,11 @@ class xmlParsing:
                 'displayCount' : 100
             }
             response = requests.get(self.paperDataURL, params=paperDataParams)
+            self.parseFromXMLStr( response.text, False )
 
-            root = ET.fromstring(response.text)
-
-            for item in root.iter('record'):
-                jour = item.find('journalInfo')
-                arti = item.find('articleInfo')
-
-                self.papers.append( Paper(
-                    title=self.getTitle(arti),
-                    author=', '.join( self.getAuthor(arti) ),
-                    year=self.getPubYear(jour),
-                    school='',
-                    doi=self.getDOI(arti),
-                    url=self.getURL(arti),
-                    abstract=self.getAbstract(arti),
-                    citationCnt=self.getCitationCount(arti)
-                ) )
+    def printAsXML(self, file=None):
+        for root in self.roots:
+            print(ET.tostring(root, encoding='utf8').decode('utf8'), file=file)
 
     def getPubYear(self, item):
         year = item.find('pub-year')
@@ -95,6 +108,6 @@ class xmlParsing:
         return cnt.text
 
 if __name__ == '__main__':
-    parser = xmlParsing(papery.KEY, "컴퓨터", papery.paperDataUrl, 1, 200)
+    parser = xmlParsing(papery.KEY, "컴퓨터", papery.paperDataUrl, 1, 300)
     parser.parse()
-    parser.printPapers()
+    parser.printAsXML(open('paper.xml', 'w', encoding='utf-8'))
