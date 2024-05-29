@@ -162,6 +162,8 @@ class ViewTab:
             messagebox.showinfo("메모", "메모할 논문이 없습니다.")
             return
 
+        self.paper.setHasMemo()
+
         memoStr='\n\n[Paper] ' + ' | '.join(
             [self.paper.title, self.paper.author, self.paper.year]
         )
