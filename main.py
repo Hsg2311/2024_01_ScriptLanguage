@@ -13,7 +13,7 @@ import GuiConfig
 class MainGUI:
     def __init__(self):
         self.master = Tk()
-        self.master.title("Main GUI")
+        self.master.title("Papery")
         self.master.geometry(str(GuiConfig.WIDTH) + "x" + str(GuiConfig.HEIGHT))
         GuiConfig.initFonts()
 
