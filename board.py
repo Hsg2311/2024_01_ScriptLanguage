@@ -16,6 +16,16 @@ class Board:
         self.pageNum = 1
         self.searchStr = ''
 
+    # temporary implementation
+    def loadCache(self):
+        parser = xmlParsing(papery.KEY, "컴퓨터", papery.paperDataUrl,
+            1, Board.SEARCH_UNIT * 3
+        )
+        parser.parseFromXMLFile('paper.xml')
+
+        self.searchStr = "컴퓨터"
+        self.papers = parser.papers[:]
+
     def search(self, searchStr):
         self.searchRange(searchStr, 0, Board.PAGE_CNT_IN_A_SEARCH * Board.RECORD_CNT_IN_A_PAGE - 1)
 

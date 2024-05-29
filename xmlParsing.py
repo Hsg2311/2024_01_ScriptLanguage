@@ -2,6 +2,7 @@ import papery
 from paper import Paper
 import xml.etree.ElementTree as ET
 import requests
+import os
 
 class xmlParsing:
     def __init__(self, apiKey, searchStr, paperDataURL, basePage, parseCnt):
@@ -25,7 +26,16 @@ class xmlParsing:
             print(file=file)
 
     def parseFromXMLFile(self, xmlFile):
-        self.parseFromXMLStr(open(xmlFile, 'r', encoding='utf-8').read())
+        i = 0
+        while True:
+            file_path = xmlFile + str(i)
+
+            if os.path.isfile(file_path):
+                self.parseFromXMLStr(open(file_path, 'r', encoding='utf-8').read())
+            else:
+                break
+
+            i += 1
 
     def parseFromXMLStr(self, xmlStr, buildNewRoot=True):
         root = ET.fromstring(xmlStr)
@@ -58,9 +68,9 @@ class xmlParsing:
             self.parseFromXMLStr( response.text, False )
 
     def printAsXML(self, file=None):
-        for root in self.roots:
+        for i, root in enumerate(self.roots):
             print( ET.tostring(root, encoding='utf8').decode('utf8'),
-                file=open(file, 'w', encoding='utf-8') if file is not None else None
+                file=open(file+str(i), 'w', encoding='utf-8') if file is not None else None
             )
 
     def getPubYear(self, item):
