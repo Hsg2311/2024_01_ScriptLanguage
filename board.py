@@ -3,6 +3,7 @@ from paper import Paper
 class Board:
     PAGE_CNT_IN_A_SEARCH = 10
     RECORD_CNT_IN_A_PAGE = 10
+    SEARCH_UNIT = 100
 
     def __init__(self):
         self.papers = []
@@ -23,17 +24,19 @@ class Board:
 
     def nextPage(self):
         if self.pageNum % Board.PAGE_CNT_IN_A_SEARCH == 0:
-            self.searchRemotePage('sample', self.pageNum // Board.PAGE_CNT_IN_A_SEARCH + 1)
+            self.searchRemotePage('sample',
+                self.pageNum * Board.RECORD_CNT_IN_A_PAGE // Board.SEARCH_UNIT + 1                      
+            )
 
         self.pageNum += 1
 
     def prevPage(self):
-        self.pageNum -= 1
-        if self.pageNum < 1:
-            self.pageNum = 1
+        self.pageNum = max(self.pageNum - 1, 1)
 
         if self.pageNum % Board.PAGE_CNT_IN_A_SEARCH == 0:
-            self.searchRemotePage('sample', self.pageNum // Board.PAGE_CNT_IN_A_SEARCH + 1)
+            self.searchRemotePage('sample',
+                self.pageNum * Board.RECORD_CNT_IN_A_PAGE // Board.SEARCH_UNIT + 1
+            )
 
     def get(self, index):
         if not (0 <= index < Board.RECORD_CNT_IN_A_PAGE):
