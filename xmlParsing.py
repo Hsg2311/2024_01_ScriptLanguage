@@ -59,7 +59,9 @@ class xmlParsing:
 
     def printAsXML(self, file=None):
         for root in self.roots:
-            print(ET.tostring(root, encoding='utf8').decode('utf8'), file=file)
+            print( ET.tostring(root, encoding='utf8').decode('utf8'),
+                file=open(file, 'w', encoding='utf-8') if file is not None else None
+            )
 
     def getPubYear(self, item):
         year = item.find('pub-year')
@@ -110,4 +112,4 @@ class xmlParsing:
 if __name__ == '__main__':
     parser = xmlParsing(papery.KEY, "컴퓨터", papery.paperDataUrl, 1, 300)
     parser.parse()
-    parser.printAsXML(open('paper.xml', 'w', encoding='utf-8'))
+    parser.printAsXML('paper.xml')
