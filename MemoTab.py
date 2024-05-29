@@ -199,7 +199,10 @@ class MailDialog:
             label = Label(self.window, text=text)
             label.grid(row=i, column=0, padx=10, pady=5, sticky="e")
             
-            entry = Entry(self.window)
+            if text == "Sender Password":
+                entry = Entry(self.window, show="*")
+            else:
+                entry = Entry(self.window)
             entry.grid(row=i, column=1, padx=10, pady=5, sticky="w")
             self.entries.append(entry)
 
