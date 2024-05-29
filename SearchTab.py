@@ -45,7 +45,7 @@ class SearchTab:
         self.result.place( x=GuiConfig.TABS_PADDINGX,
             y=max(GuiConfig.SEARCH_ENTRY_HEIGHT, GuiConfig.SEARCH_BUTTON_HEIGHT)
                 + GuiConfig.WIDGET_INTERVALY + GuiConfig.SEARCH_BAR_PADDING_Y,
-            width=GuiConfig.SEARCH_RESULT_WIDTH + GuiConfig.VIEW_BUTTON_WIDTH + GuiConfig.WIDGET_INTERVALX,
+            width=GuiConfig.SEARCH_RESULT_WIDTH + GuiConfig.SEARCH_VIEW_BUTTON_WIDTH + GuiConfig.WIDGET_INTERVALX,
             height=GuiConfig.SEARCH_RESULT_HEIGHT + GuiConfig.WIDGET_INTERVALY + GuiConfig.SEARCH_RESULT_TRAY_HEIGHT,
             anchor=NW
         )
@@ -67,13 +67,17 @@ class SearchTab:
 
         self.viewButton = Button(self.result, text="View", font=GuiConfig.cFont, command=self.view)
         self.viewButton.place( x=GuiConfig.SEARCH_RESULT_WIDTH + GuiConfig.WIDGET_INTERVALX,
-            y=GuiConfig.VIEW_BUTTON_PADDINGY,
-            width=GuiConfig.VIEW_BUTTON_WIDTH, height=GuiConfig.VIEW_BUTTON_HEIGHT,
+            y=GuiConfig.SEARCH_VIEW_BUTTON_PADDINGY,
+            width=GuiConfig.SEARCH_VIEW_BUTTON_WIDTH, height=GuiConfig.SEARCH_VIEW_BUTTON_HEIGHT,
             anchor=NW                      
         )
 
     def search(self):
-        self.board.search(self.searchStr.get())
+        # self.board.search(self.searchStr.get())
+
+        # temporary implementation
+        self.board.loadCache()
+
         self.update()
 
     def update(self):
@@ -85,7 +89,7 @@ class SearchTab:
 
         self.curRecords = []
 
-        for i in range(Board.RECORD_CNT_IN_A_PAGE):
+        for i in range(min(Board.RECORD_CNT_IN_A_PAGE, self.board.length())):
             self.curRecords.append(
                 Record(self.board.get(i), self.resultList)
             )
@@ -146,4 +150,4 @@ class SearchTab:
             if rec.owns(item):
                 self.mainGUI.viewTab.setPaper(rec.paper)
 
-        self.mainGUI.notebook.select(self.mainGUI.viewTab.frame)
+        self.mainGUI.viewTab.show(self)
