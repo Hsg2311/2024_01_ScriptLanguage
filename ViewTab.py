@@ -100,37 +100,43 @@ class ViewTab:
         self.buttons.append( Button(self.buttonsFrame, text="돌아가기",
             font=GuiConfig.cFont, command=self.goBack
         ) )
-        self.buttons[-1].grid(row=0, column=0, sticky='nsew', pady=GuiConfig.WIDGET_INTERVALY)
+        self.buttons[-1].grid(row=0, column=0, sticky='nsew', pady=GuiConfig.WIDGET_INTERVALY // 2)
 
         # row 1 - doi(url) button
         self.buttons.append( Button(self.buttonsFrame, text="DOI",
             font=GuiConfig.cFont, command=self.openDOI
         ) )
-        self.buttons[-1].grid(row=1, column=0, sticky='nsew', pady=GuiConfig.WIDGET_INTERVALY)
+        self.buttons[-1].grid(row=1, column=0, sticky='nsew', pady=GuiConfig.WIDGET_INTERVALY // 2)
 
         # row 2 - translation button
         self.buttons.append( Button(self.buttonsFrame, text="번역",
             font=GuiConfig.cFont, command=self.translate
         ) )
-        self.buttons[-1].grid(row=2, column=0, sticky='nsew', pady=GuiConfig.WIDGET_INTERVALY)
+        self.buttons[-1].grid(row=2, column=0, sticky='nsew', pady=GuiConfig.WIDGET_INTERVALY // 2)
 
         # row 3 - memo button
         self.buttons.append( Button(self.buttonsFrame, text="메모",
             font=GuiConfig.cFont, command=self.memo
         ) )
-        self.buttons[-1].grid(row=3, column=0, sticky='nsew', pady=GuiConfig.WIDGET_INTERVALY)
+        self.buttons[-1].grid(row=3, column=0, sticky='nsew', pady=GuiConfig.WIDGET_INTERVALY // 2)
 
         # row 4 - summarize button
         self.buttons.append( Button(self.buttonsFrame, text="요약",
             font=GuiConfig.cFont, command=self.summarize
         ) )
-        self.buttons[-1].grid(row=4, column=0, sticky='nsew', pady=GuiConfig.WIDGET_INTERVALY)
+        self.buttons[-1].grid(row=4, column=0, sticky='nsew', pady=GuiConfig.WIDGET_INTERVALY // 2)
 
         # row 5 - citation button
         self.buttons.append( Button(self.buttonsFrame, text="인용",
             font=GuiConfig.cFont, command=self.cite
         ) )
-        self.buttons[-1].grid(row=5, column=0, sticky='nsew', pady=GuiConfig.WIDGET_INTERVALY)
+        self.buttons[-1].grid(row=5, column=0, sticky='nsew', pady=GuiConfig.WIDGET_INTERVALY // 2)
+
+        # row 6 - bookmark button
+        self.buttons.append( Button(self.buttonsFrame, text="북마크",
+            font=GuiConfig.cFont, command=self.bookmark
+        ) )
+        self.buttons[-1].grid(row=6, column=0, sticky='nsew', pady=GuiConfig.WIDGET_INTERVALY // 2)
 
         for i in range(len(self.buttons)):
             self.buttonsFrame.rowconfigure(i, weight=1)
@@ -191,6 +197,9 @@ class ViewTab:
             return
 
         CiteDialog(self.paper, self.master)
+
+    def bookmark(self):
+        pass
 
 import clipboard
 
