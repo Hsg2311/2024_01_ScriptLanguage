@@ -1,7 +1,10 @@
 from tkinter import *
 from tkinter import messagebox
+from tkinter import scrolledtext
 
 from xml.dom import minidom
+
+import GuiConfig
 
 # smtp 정보
 host = "smtp.gmail.com" # Gmail SMTP 서버 주소.
@@ -14,7 +17,11 @@ class Memo:
     def __init__(self, master, text=''):
         self.master = master
         self.text = text
-        self.widget = Text(self.master, width = Memo.WIDTH, height = Memo.HEIGHT)
+        self.widget = scrolledtext.ScrolledText(self.master,
+            width = Memo.WIDTH, height = Memo.HEIGHT,
+            font=GuiConfig.memoFont, wrap=WORD
+        )
+        
         self.widget.bind("<FocusIn>", self.on_focus_in)
         self.widget.bind("<FocusOut>", self.on_focus_out)
         self.widget.insert(END, self.text)
@@ -79,6 +86,8 @@ class MemoTab:
             memos = doc.getElementsByTagName("memo")
             for i, memo in enumerate(memos):
                 text = memo.firstChild.nodeValue
+                # remove the last newline character
+                text = text[:-1]
                 self.memos.append(Memo(self.grids, text))
                 self.memos[-1].grid(i // MemoTab.CNT_IN_A_ROW, i % MemoTab.CNT_IN_A_ROW)
                 self.memoCnt += 1
@@ -105,8 +114,8 @@ class MemoTab:
 
         self.master.destroy()
 
-    def addMemo(self):
-        self.memos.append(Memo(self.grids))
+    def addMemo(self, text=''):
+        self.memos.append(Memo(self.grids, text))
         self.memos[-1].grid(self.memoCnt // MemoTab.CNT_IN_A_ROW, self.memoCnt % MemoTab.CNT_IN_A_ROW)
 
         self.memoCnt += 1
