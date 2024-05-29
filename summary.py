@@ -25,13 +25,14 @@ class Summarizer:
     ]
 
     def __init__(self, model='gpt-3.5-turbo'):
-        self.client = OpenAI(model)
+        self.client = OpenAI()
+        self.model = model
     
     def summarize(self, title, abstract):
         context = [conversation for conversation in self.context]
         context.append({"role": "user", "content": f"제목:{title}\n초록:{abstract}"})
         response = self.client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model=self.model,
             messages=context
         )
 
