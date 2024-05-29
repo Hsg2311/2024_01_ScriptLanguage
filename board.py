@@ -62,30 +62,30 @@ class Board:
 if __name__ == '__main__':
     board = Board()
     board.search('컴퓨터')
-    print(board.get(0)['Title'])   # sample0
+    print(board.get(0).title)   # sample0
     board.nextPage()
-    print(board.get(0)['Title'])   # sample10
+    print(board.get(0).title)   # sample10
     board.nextPage()
-    print(board.get(0)['Title'])   # sample20
+    print(board.get(0).title)   # sample20
     board.prevPage()
-    print(board.get(0)['Title'])   # sample10
+    print(board.get(0).title)   # sample10
     board.prevPage()
-    print(board.get(0)['Title'])   # sample0
+    print(board.get(0).title)   # sample0
     board.prevPage()
-    print(board.get(0)['Title'])   # sample0
+    print(board.get(0).title)   # sample0
     board.selectPage(1)
-    print(board.get(0)['Title'])   # sample0
+    print(board.get(0).title)   # sample0
     board.selectPage(2)
-    print(board.get(0)['Title'])   # sample10
+    print(board.get(0).title)   # sample10
     board.selectPage(10)
-    print(board.get(0)['Title'])   # sample90
+    print(board.get(0).title)   # sample90
     board.nextPage()
-    print(board.get(0)['Title'])   # sample100
+    print(board.get(0).title)   # sample100
     board.nextPage()
-    print(board.get(0)['Title'])   # sample110
+    print(board.get(0).title)   # sample110
     board.prevPage()
-    print(board.get(0)['Title'])   # sample100
+    print(board.get(0).title)   # sample100
     board.prevPage()
-    print(board.get(0)['Title'])   # sample90
+    print(board.get(0).title)   # sample90
     board.prevPage()
-    print(board.get(0)['Title'])   # sample80
+    print(board.get(0).title)   # sample80

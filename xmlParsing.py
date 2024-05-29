@@ -1,4 +1,5 @@
 import papery
+from paper import Paper
 import xml.etree.ElementTree as ET
 import requests
 
@@ -13,13 +14,13 @@ class xmlParsing:
 
     def printPapers(self):
         for paper in self.papers:
-            print('Year :', paper['Year'])
-            print('Title :', paper['Title'])
-            print('Author :', paper['Author'])
-            print('Abstract :', paper['Abstract'])
-            print('DOI :', paper['DOI'])
-            print('URL :', paper['URL'])
-            print('Citation Count :', paper['Citation Count'])
+            print('Year :', paper.year)
+            print('Title :', paper.title)
+            print('Author :', paper.author)
+            print('Abstract :', paper.abstract)
+            print('DOI :', paper.doi if paper.doi is not None else 'DOI 정보가 없습니다.')
+            print('URL :', paper.url if paper.url is not None else 'URL 정보가 없습니다.')
+            print('Citation Count :', paper.citationCnt)
             print()
 
     def parse(self):
@@ -36,16 +37,16 @@ class xmlParsing:
                 jour = item.find('journalInfo')
                 arti = item.find('articleInfo')
 
-                paper = {
-                    'Year' : self.getPubYear(jour),
-                    'Title' : self.getTitle(arti),
-                    'Author' : self.getAuthor(arti),
-                    'Abstract' : self.getAbstract(arti),
-                    'DOI' : self.getDOI(arti),
-                    'URL' : self.getURL(arti),
-                    'Citation Count' : self.getCitationCount(arti)
-                }
-                self.papers.append(paper)
+                self.papers.append( Paper(
+                    title=self.getTitle(arti),
+                    author=self.getAuthor(arti),
+                    year=self.getPubYear(jour),
+                    school='',
+                    doi=self.getDOI(arti),
+                    url=self.getURL(arti),
+                    abstract=self.getAbstract(arti),
+                    citationCnt=self.getCitationCount(arti)
+                ) )
 
     def getPubYear(self, item):
         year = item.find('pub-year')
@@ -69,7 +70,7 @@ class xmlParsing:
         abst = abst_group.find('abstract')
 
         if abst.text is None:
-            return '없음'
+            return '논문 초록이 제공되지 않습니다.'
         else:
             return abst.text
 
@@ -77,7 +78,7 @@ class xmlParsing:
         doi = item.find('doi')
 
         if doi.text is None:
-            return '없음'
+            return None
         else:
             return doi.text
 
@@ -85,7 +86,7 @@ class xmlParsing:
         url = item.find('url')
 
         if url.text is None:
-            return '없음'
+            return None
         else:
             return url.text
 
