@@ -46,6 +46,8 @@ class MainGUI:
             anchor=NE, width=GuiConfig.GIF_WIDTH, height=GuiConfig.GIF_HEIGHT
         )
 
+        self.defaultbg = self.master.cget('bg')
+
         self.master.after(100, self.updateGIF)
         self.master.mainloop()
 

@@ -35,6 +35,7 @@ VIEW_BUTTONS_HEIGHT = 400
 
 cFont = None
 paperTitleFont = None
+headFont = None
 
 def initFonts():
     global cFont
@@ -42,3 +43,6 @@ def initFonts():
 
     global paperTitleFont
     paperTitleFont = font.Font(family="맑은 고딕", size=12, weight="bold", slant="roman")
+
+    global headFont
+    headFont = font.Font(family="맑은 고딕", size=10, weight="bold", slant="roman")

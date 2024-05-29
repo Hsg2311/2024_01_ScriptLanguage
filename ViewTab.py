@@ -41,9 +41,11 @@ class ViewTab:
         self.paperFrame.grid_propagate(False)
 
         # Create a tag for center alignment
-        def create_centered_text_widget(parent, font, content, height):
+        def create_centered_text_widget(parent, font, content, height, bg='white'):
             frame = Frame(parent)
-            text_widget = Text(frame, font=font, wrap=WORD, width=GuiConfig.VIEW_PAPER_WIDTH, height=height)
+            text_widget = Text(frame, font=font, wrap=WORD,
+                width=GuiConfig.VIEW_PAPER_WIDTH, height=height, bg=bg
+            )
             text_widget.tag_configure("center", justify='center')
             text_widget.insert(END, content)
             text_widget.tag_add("center", "1.0", "end")
@@ -60,15 +62,21 @@ class ViewTab:
         titleStr = self.paper.title + '\n' + ' | '.join(
             [self.paper.author, self.paper.year]
         )
-        tTitle = create_centered_text_widget(self.paperFrame, GuiConfig.paperTitleFont, titleStr, 2)
+        tTitle = create_centered_text_widget(
+            self.paperFrame, GuiConfig.paperTitleFont, titleStr, 2
+        )
         tTitle.grid(row=0, column=0, sticky='nsew')
 
         # row 1 - abstract
-        tAbstract = create_centered_text_widget(self.paperFrame, GuiConfig.cFont, self.paper.abstract, 6)
+        tAbstract = create_centered_text_widget(
+            self.paperFrame, GuiConfig.cFont, self.paper.abstract, 6
+        )
         tAbstract.grid(row=1, column=0, sticky='nsew')
 
         # row 2 - reference header (using Text for word wrap and center alignment)
-        tReferenceHeader = create_centered_text_widget(self.paperFrame, GuiConfig.cFont, "관련 논문", 1)
+        tReferenceHeader = create_centered_text_widget(
+            self.paperFrame, GuiConfig.headFont, "관련 논문", 1, '#dbdfdf'
+        )
         tReferenceHeader.grid(row=2, column=0, sticky='nsew')
 
         # row 3 - reference list
