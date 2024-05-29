@@ -182,7 +182,6 @@ class ViewTab:
 
         self.mainGUI.memoTab.addMemo(memoStr)
         self.mainGUI.notebook.select(self.mainGUI.memoTab.frame)
-        self.mainGUI.notebook.hide(self.frame)
 
     def summarize(self):
         if self.paper is None:
