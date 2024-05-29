@@ -95,6 +95,8 @@ class Record:
         self.widget.bind("<FocusIn>", self.on_focus_in)
         self.widget.bind("<FocusOut>", self.on_focus_out)
 
+        self.widget.config(state='disabled')
+
     def grid(self, i, j):
         self.widget.grid(row=i, column=j, sticky='ew')
 
