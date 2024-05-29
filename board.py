@@ -3,7 +3,8 @@ from xmlParsing import xmlParsing
 import papery
 
 class Board:
-    PAGE_CNT_IN_A_SEARCH = 10
+    PAGE_CNT_IN_A_TRAY = 10
+    PAGE_CNT_IN_A_SEARCH = 30
     RECORD_CNT_IN_A_PAGE = 10
     SEARCH_UNIT = 100   # must be a multiple of 100
 
