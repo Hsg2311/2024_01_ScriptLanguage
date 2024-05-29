@@ -1,10 +1,7 @@
 from openai import OpenAI
 
-client = OpenAI()
-
-response = client.chat.completions.create(
-    model="gpt-3.5-turbo",
-    messages=[
+class Summarizer:
+    context = [
         {"role": "system", "content": "You are a language model assistant helping a user with a task. The user asks you to summarize the abstract of a paper in Korean. The user will provide the abstract in the next message."},
         {"role": "system", "content": "You are good at summarizing text in Korean, Suggesting easy-to-understand words and phrases, and providing a concise summary."},
         {"role": "user", "content": "Summarize the abstract of the paper that I'll introduce you in following message In Korean."},
@@ -25,9 +22,17 @@ response = client.chat.completions.create(
         {"role": "assistant", "content": "해당 논문의 주제는 메멘토 모리의 문화적 의미의 시대에 따른 변화입니다. 한스 홀바인 주니어의 1536년 작품 <죽음의 무도>는 죽음을 다소 해학적으로 묘사하며 윌리엄 콤의 1815년 저술 <The English Dance of Death>는 죽음을 계몽주의 시대정신의 동료로 봅니다. 해당 논문은 현대에 이르러 다윈의 진화론과 과학적 사고의 확산에 따른 종교의 약세로, 사후세계와 불멸에 대한 종교적 신념이 타격을 입음으로써 죽음의 이미지는 낭만주의적인 '달콤한 죽음'에서 우리 시대의 '더러운 죽음'으로 극적인 반전을 겪었다고 말합니다."},
         {"role": "user", "content": "Summarize the abstract of the paper that I'll introduce you in following message In Korean."},
         {"role": "assistant", "content": "알겠습니다. 논문의 초록을 소개해주시면 한국어로 요약해드리겠습니다."},
-        {"role": "user", "content": "제목:Ambient Occlusion을 이용한 Global Illumination 대체기법 연구\n초록:게임 콘솔에서부터 TV, 그리고 헐리우드 영화에 이르기까지 3D 렌더링 테크놀러지는 많은 분야에 쓰이고 있다. 컴퓨터로 이미지를 렌더링하는 방법은 90년대후반까지는 Phong Shading을 위주로 하는 Rasterization 방식의 렌더링이 주를 이루었으며 이 방식은 최근에까지 영화나 극장용 애니메이션의 렌더링에 주력으로 쓰여 왔다. 21세기에 들어서는 레이 트레이싱(Ray Tracing)과 그 발전형인 글로벌 일루미네이션(Global Illumination)이 사실감과 퀄러티로 대두되면서 건축 렌더링부터 시장을 점유해갔으나, 글로벌 일루미네이션은 극장용 애니메이션이나 영화에주력으로 사용되기에는 렌더링 시간이 비현실적으로 느린 경우가 많았다. 따라서 본 논문은 각 렌더링 방식의 개념적, 수학적 이해를 살펴본 후 앰비언트 어클루전(Ambient Occlusion)의 함수를 Rasterization방식에서 사용하는 Illumination Loop 식에 접목시켜서 글로벌 일루미네이션처럼 다양한 색의 조명을 반영하면서도 Rasterization처럼 빨리 렌더링 할 수 있는 알고리즘 수식과 이 수식을 사용한 RenderMan Shader 사용 예를 제시하였다. 이는 글로벌 일루미네이션이 나타낼 수 있는 사실적인 표현, 그리고 Rasterization방식의 빠른 속도, 이 두 가지 렌더링 방식의 장점만을 조합하여 짧은 렌더 타임을 유지하면서도 쉽게 좋은 퀄러티를 얻을 수 있는 새로운 개념으로써 이러한 방법은 이후 애니메이션이나 영화 VFX 제작에 있어서 제작비의 절감과 함께 좀 더 완성도 있는 결과물을 만들어 내는 역할을 할 수 있는 계기가 되길 바란다."}
     ]
-)
 
-for choice in response.choices:
-    print( choice.message.content )
+    def __init__(self, model='gpt-3.5-turbo'):
+        self.client = OpenAI(model)
+    
+    def summarize(self, title, abstract):
+        context = [conversation for conversation in self.context]
+        context.append({"role": "user", "content": f"제목:{title}\n초록:{abstract}"})
+        response = self.client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=context
+        )
+
+        return response.choices[0].message.content
