@@ -17,13 +17,20 @@ class Board:
         self.searchStr = ''
 
     # temporary implementation
-    def loadCache(self):
-        parser = xmlParsing(papery.KEY, "컴퓨터", papery.paperDataUrl,
-            1, Board.SEARCH_UNIT * 3
-        )
-        parser.parseFromXMLFile('paper.xml')
+    def loadCache(self, searchStr):
+        if searchStr == '컴퓨터':
+            parser = xmlParsing(papery.KEY, "컴퓨터", papery.paperDataUrl,
+                1, Board.SEARCH_UNIT * 3
+            )
+            parser.parseFromXMLFile('computer.xml')
+            self.searchStr = "컴퓨터"
+        elif searchStr == '게임':
+            parser = xmlParsing(papery.KEY, "게임", papery.paperDataUrl,
+                1, Board.SEARCH_UNIT * 3
+            )
+            parser.parseFromXMLFile('game.xml')
+            self.searchStr = "게임"
 
-        self.searchStr = "컴퓨터"
         self.papers = parser.papers[:]
 
     def search(self, searchStr):

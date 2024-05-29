@@ -120,6 +120,6 @@ class xmlParsing:
         return cnt.text
 
 if __name__ == '__main__':
-    parser = xmlParsing(papery.KEY, "컴퓨터", papery.paperDataUrl, 1, 300)
+    parser = xmlParsing(papery.KEY, "게임", papery.paperDataUrl, 1, 300)
     parser.parse()
-    parser.printAsXML('paper.xml')
+    parser.printAsXML('game.xml')
