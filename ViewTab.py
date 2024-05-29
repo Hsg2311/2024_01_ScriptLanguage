@@ -126,6 +126,12 @@ class ViewTab:
         ) )
         self.buttons[-1].grid(row=4, column=0, sticky='nsew', pady=GuiConfig.WIDGET_INTERVALY)
 
+        # row 5 - citation button
+        self.buttons.append( Button(self.buttonsFrame, text="인용",
+            font=GuiConfig.cFont, command=self.cite
+        ) )
+        self.buttons[-1].grid(row=5, column=0, sticky='nsew', pady=GuiConfig.WIDGET_INTERVALY)
+
         for i in range(len(self.buttons)):
             self.buttonsFrame.rowconfigure(i, weight=1)
         self.buttonsFrame.columnconfigure(0, weight=1)
@@ -178,3 +184,65 @@ class ViewTab:
             return
         
         messagebox.showinfo("요약", self.summarizer.summarize(self.paper.title, self.paper.abstract))
+
+    def cite(self):
+        if self.paper is None:
+            messagebox.showinfo("인용", "인용할 논문이 없습니다.")
+            return
+
+        CiteDialog(self.paper, self.master)
+
+import clipboard
+
+class CiteDialog:
+    def __init__(self, paper, master):
+        self.paper = paper
+        self.master = master
+
+        self.frame = Toplevel(master)
+        self.frame.title("인용")
+        self.frame.geometry("300x200")
+
+        # select which format to cite
+        # by choosing the format with a radio button
+        self.radioFrame = Frame(self.frame)
+        self.radioFrame.pack()
+
+        self.format = StringVar()
+        self.format.set("APA")
+
+        self.radioAPA = Radiobutton(self.radioFrame, text="APA", variable=self.format, value="APA")
+        self.radioAPA.pack(side=LEFT)
+
+        self.radioMLA = Radiobutton(self.radioFrame, text="MLA", variable=self.format, value="MLA")
+        self.radioMLA.pack(side=LEFT)
+
+        self.radioChicago = Radiobutton(self.radioFrame, text="Chicago", variable=self.format, value="Chicago")
+        self.radioChicago.pack(side=LEFT)
+
+        self.submitButton = Button(self.frame, text="인용하기", command=self.submit)
+        self.submitButton.pack()
+
+    def submit(self):
+        citation = None
+        if self.format.get() == "APA":
+            citation = self.makeAPACitation()
+        elif self.format.get() == "MLA":
+            citation = self.makeMLACitation()
+        elif self.format.get() == "Chicago":
+            citation = self.makeChicagoCitation()
+
+        clipboard.copy(citation)
+        self.frame.destroy()
+
+    def makeAPACitation(self):
+        return self.paper.author + ' (' + self.paper.year + '). ' + self.paper.title
+        # return self.paper.author + ' (' + self.paper.year + '). ' + self.paper.title + '. ' + self.paper.journal + ', ' + self.paper.volume + '(' + self.paper.issue + '), ' + self.paper.pages + '.'
+
+    def makeMLACitation(self):
+        return self.paper.author + '. "' + self.paper.title + '." (' + self.paper.year + ')'
+        # return self.paper.author + '. "' + self.paper.title + '." ' + self.paper.journal + ' ' + self.paper.volume + '.' + self.paper.issue + ' (' + self.paper.year + '): ' + self.paper.pages + '.'
+
+    def makeChicagoCitation(self):
+        return self.paper.author + '. "' + self.paper.title + '." (' + self.paper.year + ')'
+        # return self.paper.author + '. "' + self.paper.title + '." ' + self.paper.journal + ' ' + self.paper.volume + ', no. ' + self.paper.issue + ' (' + self.paper.year + '): ' + self.paper.pages + '.'
