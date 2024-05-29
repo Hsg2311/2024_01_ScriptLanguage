@@ -16,6 +16,7 @@ class SearchTab:
 
         self.initWidgets()
         self.board=Board()
+        self.curRecords = []
         self.trayBasePage = 1
 
     def initWidgets(self):
@@ -82,8 +83,13 @@ class SearchTab:
         for widgets in self.pageTray.winfo_children():
             widgets.destroy()
 
+        self.curRecords = []
+
         for i in range(Board.RECORD_CNT_IN_A_PAGE):
-            Record(self.board.get(i), self.resultList).grid(i, 0)
+            self.curRecords.append(
+                Record(self.board.get(i), self.resultList)
+            )
+            self.curRecords[-1].grid(i, 0)
             self.resultList.grid_rowconfigure(i, weight=1)
         self.resultList.grid_columnconfigure(0, weight=1)
 
@@ -132,6 +138,12 @@ class SearchTab:
         self.update()
 
     def view(self):
-        self.mainGUI.notebook.select(
-            self.mainGUI.viewTab.frame
-        )
+        item = self.resultList.focus_get()
+        if not isinstance(item, Text):
+            return
+        
+        for rec in self.curRecords:
+            if rec.owns(item):
+                self.mainGUI.viewTab.setPaper(rec.paper)
+
+        self.mainGUI.notebook.select(self.mainGUI.viewTab.frame)

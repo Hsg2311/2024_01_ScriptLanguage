@@ -87,8 +87,8 @@ class Record:
     def on_focus_out(self, event):
         self.widget.config(bg="white", fg='black')
 
-
-
+    def owns(self, widget):
+        return self.widget == widget
 
 if __name__ == '__main__':
     board = Board()
