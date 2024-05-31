@@ -5,6 +5,10 @@ import requests
 import os
 
 class xmlParsing:
+    TITLE_MODE = 0
+    AUTHOR_MODE = 1
+    JORNAL_MODE = 2
+
     def __init__(self, apiKey, searchStr, paperDataURL, basePage, parseCnt):
         self.papers = []
         self.searchStr = searchStr
@@ -13,6 +17,16 @@ class xmlParsing:
         self.basePage = basePage
         self.cnt = parseCnt
         self.roots = []
+        self.searchMode = self.TITLE_MODE
+
+    def titleMode(self):
+        self.searchMode = self.TITLE_MODE
+
+    def authorMode(self):
+        self.searchMode = self.AUTHOR_MODE
+
+    def journalMode(self):
+        self.searchMode = self.JORNAL_MODE
 
     def printPapers(self, file=None):
         for paper in self.papers:
@@ -61,9 +75,18 @@ class xmlParsing:
     def parse(self):
         for i in range(0, self.cnt // 100):
             paperDataParams = {'key' : self.key, 'apiCode' : 'articleSearch',
-                'title' : self.searchStr, 'page' : i + self.basePage,
-                'displayCount' : 100
+                'page' : i + self.basePage, 'displayCount' : 100
             }
+
+            if self.searchMode == self.TITLE_MODE:
+                paperDataParams['title'] = self.searchStr
+            elif self.searchMode == self.AUTHOR_MODE:
+                paperDataParams['author'] = self.searchStr
+            elif self.searchMode == self.JORNAL_MODE:
+                paperDataParams['journal'] = self.searchStr
+            else:
+                raise ValueError('Invalid search mode')
+
             response = requests.get(self.paperDataURL, params=paperDataParams)
             self.parseFromXMLStr( response.text, False )
 
@@ -120,6 +143,7 @@ class xmlParsing:
         return cnt.text
 
 if __name__ == '__main__':
-    parser = xmlParsing(papery.KEY, "게임", papery.paperDataUrl, 1, 300)
+    parser = xmlParsing(papery.KEY, "김영식", papery.paperDataUrl, 1, 300)
+    parser.authorMode()
     parser.parse()
-    parser.printAsXML('game.xml')
+    parser.printAsXML('김영식.xml')
