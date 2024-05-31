@@ -8,6 +8,7 @@ class xmlParsing:
     TITLE_MODE = 0
     AUTHOR_MODE = 1
     JORNAL_MODE = 2
+    INSTITUTION_MODE = 3
 
     def __init__(self, apiKey, searchStr, paperDataURL, basePage, parseCnt):
         self.papers = []
@@ -27,6 +28,9 @@ class xmlParsing:
 
     def journalMode(self):
         self.searchMode = self.JORNAL_MODE
+
+    def institutionMode(self):
+        self.searchMode = self.INSTITUTION_MODE
 
     def printPapers(self, file=None):
         for paper in self.papers:
@@ -84,6 +88,8 @@ class xmlParsing:
                 paperDataParams['author'] = self.searchStr
             elif self.searchMode == self.JORNAL_MODE:
                 paperDataParams['journal'] = self.searchStr
+            elif self.searchMode == self.INSTITUTION_MODE:
+                paperDataParams['institution'] = self.searchStr
             else:
                 raise ValueError('Invalid search mode')
 
@@ -96,12 +102,14 @@ class xmlParsing:
                 file=open(file+str(i), 'w', encoding='utf-8') if file is not None else None
             )
 
+    def __getItem(self, item, tag):
+        tag = item.find(tag)
+        return tag.text if tag is not None else None
+    
     def getPubYear(self, item):
-        year = item.find('pub-year')
-        return year.text
-
+        return self.__getItem(item, 'pub-year')
+    
     def getTitle(self, item):
-        # 상위 엘리먼트에서부터 찾으면서 내려와야 함.
         title_group = item.find('title-group')
         article_title = title_group.find('article-title')
         return article_title.text
@@ -115,32 +123,25 @@ class xmlParsing:
     
     def getAbstract(self, item):
         abst_group = item.find('abstract-group')
-        abst = abst_group.find('abstract')
-
-        if abst.text is None:
-            return '논문 초록이 제공되지 않습니다.'
-        else:
-            return abst.text
-
+        return self.__getItem(abst_group, 'abstract')
+    
     def getDOI(self, item):
-        doi = item.find('doi')
-
-        if doi.text is None:
-            return None
-        else:
-            return doi.text
-
+        return self.__getItem(item, 'doi')
+    
     def getURL(self, item):
-        url = item.find('url')
-
-        if url.text is None:
-            return None
-        else:
-            return url.text
-
+        return self.__getItem(item, 'url')
+    
     def getCitationCount(self, item):
-        cnt = item.find('citation-count')
-        return cnt.text
+        return self.__getItem(item, 'citation-count')
+    
+    def getJournal(self, item):
+        return self.__getItem(item, 'journal')
+    
+    def getVolume(self, item):
+        return self.__getItem(item, 'volume')
+    
+    def getIssue(self, item):
+        return self.__getItem(item, 'issue')
 
 if __name__ == '__main__':
     parser = xmlParsing(papery.KEY, "김영식", papery.paperDataUrl, 1, 300)
