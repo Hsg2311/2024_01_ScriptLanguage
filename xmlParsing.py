@@ -161,9 +161,9 @@ class PageParseResult:
         self.citationCnt = citationCnt
 
 class DetailParser:
-    def __init__(self, apiKey, articleID, paperDataURL):
-        self.__key = apiKey
-        self.__paperDataURL = paperDataURL
+    def __init__(self, articleID):
+        self.__key = papery.KEY
+        self.__paperDataURL = papery.paperDataUrl
         self.__articleID = articleID
         self.__detail = None
 
@@ -252,12 +252,12 @@ class DetailParseResult:
         self.authorInsts = authorInsts
 
 if __name__ == '__main__':
-    xmls = PageParser("사랑", PageParser.TITLE_MODE, 1, 300).isearch()
-    for i, xml in enumerate(xmls):
-        with open("사랑.xml" + str(i), 'w', encoding='utf-8') as f:
-            f.write(xml)
+    # xmls = PageParser("사랑", PageParser.TITLE_MODE, 1, 300).isearch()
+    # for i, xml in enumerate(xmls):
+    #     with open("사랑.xml" + str(i), 'w', encoding='utf-8') as f:
+    #         f.write(xml)
 
-    # r = DetailParser(papery.KEY, 'ART001564843', papery.paperDataUrl).isearchAndParse()
-    # print('keywords:', r.keywords)
-    # print('references:', r.refs)
-    # print('author institutions:', r.authorInsts)
+    r = DetailParser('ART001564843').isearchAndParse()
+    print('keywords:', r.keywords)
+    print('references:', r.refs)
+    print('author institutions:', r.authorInsts)
