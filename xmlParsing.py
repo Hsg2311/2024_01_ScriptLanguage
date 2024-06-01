@@ -62,7 +62,7 @@ class PageParser:
 
             i += 1
 
-        return self.__pages
+        return self.__pages if len(self.__pages) > 0 else None
 
     # one-based index
     def __getPage(self, idx):
@@ -166,7 +166,7 @@ class DetailParser:
         else:
             raise FileNotFoundError('No such file')
 
-        return self.__detail
+        return self.__detail if self.__detail is not None else None
     
     def parse(self):
         root = ET.fromstring(self.__detail)
