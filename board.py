@@ -48,8 +48,8 @@ class Board:
         remotePageStart = start // Board.SEARCH_UNIT + 1
         remotePageEnd = end // Board.SEARCH_UNIT + 1
 
-        self.papers = PageParser( papery.KEY, searchStr, PageParser.TITLE_MODE, papery.paperDataUrl,
-            remotePageStart, Board.SEARCH_UNIT * (remotePageEnd - remotePageStart + 1)
+        self.papers = PageParser( searchStr, PageParser.TITLE_MODE, remotePageStart,
+            Board.SEARCH_UNIT * (remotePageEnd - remotePageStart + 1)
         ).iSearchAndParse()
 
     def selectPage(self, pageNum):

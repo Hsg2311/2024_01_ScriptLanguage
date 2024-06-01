@@ -10,13 +10,12 @@ class PageParser:
     JORNAL_MODE = 2
     INSTITUTION_MODE = 3
 
-    def __init__(self, apiKey, searchStr, searchMode,
-        paperDataURL, basePage, parseCnt
+    def __init__(self, searchStr, searchMode, basePage, parseCnt
     ):
         self.papers = []
         self.__searchStr = searchStr
-        self.__key = apiKey
-        self.__paperDataURL = paperDataURL
+        self.__key = papery.KEY
+        self.__paperDataURL = papery.paperDataUrl
         self.__basePage = basePage
         self.__cnt = parseCnt
         self.__pages = []
