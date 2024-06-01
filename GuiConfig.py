@@ -37,6 +37,7 @@ cFont = None
 paperTitleFont = None
 headFont = None
 memoFont = None
+refFont = None
 
 def initFonts():
     global cFont
@@ -50,3 +51,6 @@ def initFonts():
 
     global memoFont
     memoFont = font.Font(family="맑은 고딕", size=8, weight="normal", slant="roman")
+
+    global refFont
+    refFont = font.Font(family="맑은 고딕", size=8, weight="normal", slant="roman")

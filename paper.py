@@ -2,7 +2,7 @@ class Paper:
     def __init__( self, title = None, authors = None, year = None,
         authorInsts = None, journal = None, volume = None, issue = None,
         doi = None, url = None, abstract = None, citationCnt = None,
-        keywords = None, refs = None, institution = None
+        keywords = None, refs = None, institution = None, articleID = None
     ):
         self.title = title
         self.authors = authors
@@ -18,6 +18,7 @@ class Paper:
         self.keywords = keywords
         self.refs = refs
         self.institution = institution
+        self.articleID = articleID
 
         self.hasBookmark = False
         self.hasMemo = False

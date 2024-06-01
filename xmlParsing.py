@@ -84,6 +84,7 @@ class PageParser:
                 arti = item.find('articleInfo')
 
                 self.papers.append( PageParseResult(
+                    self.__getArticleID(arti),
                     self.__getTitle(arti),
                     self.__getAuthorNames(arti),
                     self.__getPubYear(jour),
@@ -103,6 +104,9 @@ class PageParser:
         tag = item.find(tag)
         return tag.text if tag is not None else None
     
+    def __getArticleID(self, item):
+        return item.attrib['article-id']
+
     def __getPubYear(self, item):
         return self.__getItem(item, 'pub-year')
     
@@ -144,10 +148,11 @@ class PageParser:
         return self.__getItem(item, 'publisher-name')
     
 class PageParseResult:
-    def __init__(self, title, authors,
+    def __init__(self, articleID, title, authors,
         year, abstract ,journal, institution,
         volume, issue, doi, url, citationCnt
     ):
+        self.articleID = articleID
         self.title = title
         self.authors = authors
         self.year = year
@@ -172,6 +177,7 @@ class PageParseResult:
         paper.doi = self.doi
         paper.url = self.url
         paper.citationCnt = self.citationCnt
+        paper.articleID = self.articleID
 
 class DetailParser:
     def __init__(self, articleID):
