@@ -83,17 +83,19 @@ class PageParser:
                 jour = item.find('journalInfo')
                 arti = item.find('articleInfo')
 
-                self.papers.append(
-                        Paper(title=self.__getTitle(arti),
-                        author=', '.join( self.__getAuthor(arti) ),
-                        year=self.__getPubYear(jour),
-                        school='',
-                        doi=self.__getDOI(arti),
-                        url=self.__getURL(arti),
-                        abstract=self.__getAbstract(arti),
-                        citationCnt=self.__getCitationCount(arti)
-                    )
-                )
+                self.papers.append( PageParseResult(
+                    self.__getTitle(arti),
+                    self.__getAuthorNames(arti),
+                    self.__getPubYear(jour),
+                    self.__getAbstract(arti),
+                    self.__getJournal(jour),
+                    self.__getInstitution(jour),
+                    self.__getVolume(jour),
+                    self.__getIssue(jour),
+                    self.__getDOI(arti),
+                    self.__getURL(arti),
+                    self.__getCitationCount(arti)
+                ) )
 
         return self.papers
 
@@ -109,7 +111,7 @@ class PageParser:
         article_title = title_group.find('article-title')
         return article_title.text
     
-    def __getAuthor(self, item):
+    def __getAuthorNames(self, item):
         result = []
         author_group = item.find('author-group')
         for author in author_group.findall('author'):
@@ -130,7 +132,7 @@ class PageParser:
         return self.__getItem(item, 'citation-count')
     
     def __getJournal(self, item):
-        return self.__getItem(item, 'journal')
+        return self.__getItem(item, 'journal-name')
     
     def __getVolume(self, item):
         return self.__getItem(item, 'volume')
@@ -138,6 +140,26 @@ class PageParser:
     def __getIssue(self, item):
         return self.__getItem(item, 'issue')
     
+    def __getInstitution(self, item):
+        return self.__getItem(item, 'publisher-name')
+    
+class PageParseResult:
+    def __init__(self, title, authors,
+        year, abstract ,journal, institution,
+        volume, issue, doi, url, citationCnt
+    ):
+        self.title = title
+        self.authors = authors
+        self.year = year
+        self.abstract = abstract
+        self.journal = journal
+        self.institution = institution
+        self.volume = volume
+        self.issue = issue
+        self.doi = doi
+        self.url = url
+        self.citationCnt = citationCnt
+
 class DetailParser:
     def __init__(self, apiKey, articleID, paperDataURL):
         self.__key = apiKey
@@ -168,17 +190,20 @@ class DetailParser:
         return self.__detail if self.__detail is not None else None
     
     def parse(self):
+        refs = []
+        keywords = []
+        authorInsts = []
+
         root = ET.fromstring(self.__detail)
         for item in root.iter('record'):
-            jour = item.find('journalInfo')
             arti = item.find('articleInfo')
             ref = item.find('referenceInfo')
 
-            refs = []
-            for ref_item in ref.findall('reference'):
-                refs.append( ref_item.find('title').text )
+            refs.extend( self.__getRefs(ref) )
+            keywords.extend( self.__getKeywords(arti) )
+            authorInsts.extend( self.__getAuthorInsts(arti) )
 
-            print(refs)
+        return DetailParseResult(keywords, refs, authorInsts)
 
     def isearchAndParse(self):
         self.isearch()
@@ -187,11 +212,52 @@ class DetailParser:
     def fsearchAndParse(self):
         self.fsearch()
         return self.parse()
+    
+    def __getItem(self, item, tag):
+        tag = item.find(tag)
+        return tag.text if tag is not None else None
+    
+    def __getKeywords(self, item):
+        result = []
+        keyword_group = item.find('keyword-group')
+        for keyword in keyword_group.findall('keyword'):
+            result.append(keyword.text)
+        return result
+    
+    def __getRefs(self, item):
+        refs = []
+
+        for ref_item in item.findall('reference'):
+            titleObj = ref_item.find('title')
+            if titleObj is not None:
+                refs.append( ref_item.attrib['type-name'] + ' | ' + titleObj.text )
+            else:
+                refs.append( ref_item.attrib['type-name'] + ' | ' + ref_item.text )
+
+        return refs if len(refs) > 0 else None
+    
+    def __getAuthorInsts(self, item):
+        result = []
+        author_group = item.find('author-group')
+
+        for author in author_group.findall('author'):
+            result.append( author.find('institution').text )
+        
+        return result
+    
+class DetailParseResult:
+    def __init__(self, keywords, refs, authorInsts):
+        self.keywords = keywords
+        self.refs = refs
+        self.authorInsts = authorInsts
 
 if __name__ == '__main__':
-    # xmls = PageParser(papery.KEY, "사랑", PageParser.TITLE_MODE, papery.paperDataUrl, 1, 300).isearch()
-    # for i, xml in enumerate(xmls):
-    #     with open("사랑.xml" + str(i), 'w', encoding='utf-8') as f:
-    #         f.write(xml)
+    xmls = PageParser("사랑", PageParser.TITLE_MODE, 1, 300).isearch()
+    for i, xml in enumerate(xmls):
+        with open("사랑.xml" + str(i), 'w', encoding='utf-8') as f:
+            f.write(xml)
 
-    print( DetailParser(papery.KEY, 'ART001564843', papery.paperDataUrl).isearchAndParse() )
+    # r = DetailParser(papery.KEY, 'ART001564843', papery.paperDataUrl).isearchAndParse()
+    # print('keywords:', r.keywords)
+    # print('references:', r.refs)
+    # print('author institutions:', r.authorInsts)

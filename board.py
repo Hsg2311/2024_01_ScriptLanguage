@@ -48,9 +48,23 @@ class Board:
         remotePageStart = start // Board.SEARCH_UNIT + 1
         remotePageEnd = end // Board.SEARCH_UNIT + 1
 
-        self.papers = PageParser( searchStr, PageParser.TITLE_MODE, remotePageStart,
+        parseResults = PageParser( searchStr, PageParser.TITLE_MODE, remotePageStart,
             Board.SEARCH_UNIT * (remotePageEnd - remotePageStart + 1)
         ).iSearchAndParse()
+
+        self.papers = []
+
+        for parseResult in parseResults:
+            self.papers.append( Paper(
+                parseResult.title,
+                ', '.join(parseResult.authors),
+                parseResult.year,
+                '',
+                parseResult.doi,
+                parseResult.url,
+                parseResult.abstract,
+                parseResult.citationCnt
+            ) )
 
     def selectPage(self, pageNum):
         self.pageNum = pageNum
