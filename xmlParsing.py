@@ -48,6 +48,8 @@ class PageParser:
         return self.__pages
 
     # short for file search
+    # expect the file to be named as @.xml#
+    # where @ is the search string and # is the page number
     def fsearch(self):
         i = 0
         while True:
@@ -136,23 +138,61 @@ class PageParser:
     
     def __getIssue(self, item):
         return self.__getItem(item, 'issue')
+    
+class DetailParser:
+    def __init__(self, apiKey, articleID, paperDataURL):
+        self.__key = apiKey
+        self.__paperDataURL = paperDataURL
+        self.__articleID = articleID
+        self.__detail = None
 
-    # TODO: Add DetailParser Class and implement the following methods
+    # short for internet search
+    def isearch(self):
+        params = {'key' : self.__key, 'apiCode' : 'articleDetail',
+            'id' : self.__articleID
+        }
+        self.__detail = requests.get(self.__paperDataURL, params=params).text
 
-    # def __searchDetail(self, articleId):
-    #     params = {'key' : self.__key, 'apiCode' : 'articleDetail',
-    #         'id' : articleId
-    #     }
-    #     self.__details.append(
-    #         requests.get(self.__paperDataURL, params=params)
-    #     )
+        return self.__detail
+    
+    # short for file search
+    # expect the file to be named as #.xml
+    # where # is the article ID
+    def fsearch(self):
+        file_path = self.__articleID + '.xml'
 
-    #     # one-based index
-    # def __getDetail(self, idx):
-    #     return self.__details[idx - (self.__basePage - 1) * 100 - 1]
+        if os.path.isfile(file_path):
+            self.__detail = open(file_path, 'r', encoding='utf-8').read()
+        else:
+            raise FileNotFoundError('No such file')
+
+        return self.__detail
+    
+    def parse(self):
+        root = ET.fromstring(self.__detail)
+        for item in root.iter('record'):
+            jour = item.find('journalInfo')
+            arti = item.find('articleInfo')
+            ref = item.find('referenceInfo')
+
+            refs = []
+            for ref_item in ref.findall('reference'):
+                refs.append( ref_item.find('title').text )
+
+            print(refs)
+
+    def isearchAndParse(self):
+        self.isearch()
+        return self.parse()
+    
+    def fsearchAndParse(self):
+        self.fsearch()
+        return self.parse()
 
 if __name__ == '__main__':
-    xmls = PageParser(papery.KEY, "사랑", PageParser.TITLE_MODE, papery.paperDataUrl, 1, 300).isearch()
-    for i, xml in enumerate(xmls):
-        with open("사랑.xml" + str(i), 'w', encoding='utf-8') as f:
-            f.write(xml)
+    # xmls = PageParser(papery.KEY, "사랑", PageParser.TITLE_MODE, papery.paperDataUrl, 1, 300).isearch()
+    # for i, xml in enumerate(xmls):
+    #     with open("사랑.xml" + str(i), 'w', encoding='utf-8') as f:
+    #         f.write(xml)
+
+    print( DetailParser(papery.KEY, 'ART001564843', papery.paperDataUrl).isearchAndParse() )
