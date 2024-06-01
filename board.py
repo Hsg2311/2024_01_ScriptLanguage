@@ -1,5 +1,5 @@
 from paper import Paper
-from xmlParsing import xmlParsing
+from xmlParsing import PageParser
 import papery
 
 from tkinter import *
@@ -16,22 +16,23 @@ class Board:
         self.pageNum = 1
         self.searchStr = ''
 
-    # temporary implementation
+    # replace commented code with newer practical code
     def loadCache(self, searchStr):
-        if searchStr == '컴퓨터':
-            parser = xmlParsing(papery.KEY, "컴퓨터", papery.paperDataUrl,
-                1, Board.SEARCH_UNIT * 3
-            )
-            parser.parseFromXMLFile('computer.xml')
-            self.searchStr = "컴퓨터"
-        elif searchStr == '게임':
-            parser = xmlParsing(papery.KEY, "게임", papery.paperDataUrl,
-                1, Board.SEARCH_UNIT * 3
-            )
-            parser.parseFromXMLFile('game.xml')
-            self.searchStr = "게임"
+        # if searchStr == '컴퓨터':
+        #     parser = xmlParsing(papery.KEY, "컴퓨터", papery.paperDataUrl,
+        #         1, Board.SEARCH_UNIT * 3
+        #     )
+        #     parser.parseFromXMLFile('computer.xml')
+        #     self.searchStr = "컴퓨터"
+        # elif searchStr == '게임':
+        #     parser = xmlParsing(papery.KEY, "게임", papery.paperDataUrl,
+        #         1, Board.SEARCH_UNIT * 3
+        #     )
+        #     parser.parseFromXMLFile('game.xml')
+        #     self.searchStr = "게임"
 
-        self.papers = parser.papers[:]
+        # self.papers = parser.papers[:]
+        pass
 
     def search(self, searchStr):
         self.searchRange(searchStr, 0, Board.PAGE_CNT_IN_A_SEARCH * Board.RECORD_CNT_IN_A_PAGE - 1)
@@ -47,12 +48,9 @@ class Board:
         remotePageStart = start // Board.SEARCH_UNIT + 1
         remotePageEnd = end // Board.SEARCH_UNIT + 1
 
-        self.papers = []
-        parser = xmlParsing(papery.KEY, searchStr, papery.paperDataUrl,
+        self.papers = PageParser( papery.KEY, searchStr, PageParser.TITLE_MODE, papery.paperDataUrl,
             remotePageStart, Board.SEARCH_UNIT * (remotePageEnd - remotePageStart + 1)
-        )
-        parser.parse()
-        self.papers = parser.papers[:]
+        ).iSearchAndParse()
 
     def selectPage(self, pageNum):
         self.pageNum = pageNum

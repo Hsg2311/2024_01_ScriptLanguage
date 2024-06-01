@@ -4,147 +4,155 @@ import xml.etree.ElementTree as ET
 import requests
 import os
 
-class xmlParsing:
+class PageParser:
     TITLE_MODE = 0
     AUTHOR_MODE = 1
     JORNAL_MODE = 2
     INSTITUTION_MODE = 3
 
-    def __init__(self, apiKey, searchStr, paperDataURL, basePage, parseCnt):
+    def __init__(self, apiKey, searchStr, searchMode,
+        paperDataURL, basePage, parseCnt
+    ):
         self.papers = []
-        self.searchStr = searchStr
-        self.key = apiKey
-        self.paperDataURL = paperDataURL
-        self.basePage = basePage
-        self.cnt = parseCnt
-        self.roots = []
-        self.searchMode = self.TITLE_MODE
+        self.__searchStr = searchStr
+        self.__key = apiKey
+        self.__paperDataURL = paperDataURL
+        self.__basePage = basePage
+        self.__cnt = parseCnt
+        self.__pages = []
+        self.__details = []
+        self.__searchMode = searchMode
 
-    def titleMode(self):
-        self.searchMode = self.TITLE_MODE
+    # short for internet search
+    def isearch(self):
+        for i in range(0, self.__cnt // 100):
+            params = {'key' : self.__key, 'apiCode' : 'articleSearch',
+                'page' : self.__basePage + i, 'displayCount' : 100          
+            }
 
-    def authorMode(self):
-        self.searchMode = self.AUTHOR_MODE
+            if self.__searchMode == self.TITLE_MODE:
+                params['title'] = self.__searchStr
+            elif self.__searchMode == self.AUTHOR_MODE:
+                params['author'] = self.__searchStr
+            elif self.__searchMode == self.JORNAL_MODE:
+                params['journal'] = self.__searchStr
+            elif self.__searchMode == self.INSTITUTION_MODE:
+                params['institution'] = self.__searchStr
+            else:
+                raise ValueError('Invalid search mode')
+            
+            self.__pages.append(
+                 requests.get(self.__paperDataURL, params=params).text
+            )
+        
+        return self.__pages
 
-    def journalMode(self):
-        self.searchMode = self.JORNAL_MODE
-
-    def institutionMode(self):
-        self.searchMode = self.INSTITUTION_MODE
-
-    def printPapers(self, file=None):
-        for paper in self.papers:
-            print('Year :', paper.year, file=file)
-            print('Title :', paper.title, file=file)
-            print('Author :', paper.author, file=file)
-            print('Abstract :', paper.abstract, file=file)
-            print('DOI :', paper.doi if paper.doi is not None else 'DOI 정보가 없습니다.', file=file)
-            print('URL :', paper.url if paper.url is not None else 'URL 정보가 없습니다.', file=file)
-            print('Citation Count :', paper.citationCnt, file=file)
-            print(file=file)
-
-    def parseFromXMLFile(self, xmlFile):
+    # short for file search
+    def fsearch(self):
         i = 0
         while True:
-            file_path = xmlFile + str(i)
+            file_path = self.__searchStr + str(i)
 
             if os.path.isfile(file_path):
-                self.parseFromXMLStr(open(file_path, 'r', encoding='utf-8').read())
+                self.__pages.append( open(file_path, 'r', encoding='utf-8').read() )
             else:
                 break
 
             i += 1
 
-    def parseFromXMLStr(self, xmlStr, buildNewRoot=True):
-        root = ET.fromstring(xmlStr)
-        if buildNewRoot:
-            self.roots.clear()
-        self.roots.append(root)
+        return self.__pages
 
-        for item in root.iter('record'):
-            jour = item.find('journalInfo')
-            arti = item.find('articleInfo')
+    # one-based index
+    def __getPage(self, idx):
+        return self.__pages[idx - self.__basePage]
 
-            self.papers.append( Paper(
-                title=self.getTitle(arti),
-                author=', '.join( self.getAuthor(arti) ),
-                year=self.getPubYear(jour),
-                school='',
-                doi=self.getDOI(arti),
-                url=self.getURL(arti),
-                abstract=self.getAbstract(arti),
-                citationCnt=self.getCitationCount(arti)
-            ) )
+    def iSearchAndParse(self):
+        self.isearch()
+        return self.parse()
+
+    def fSearchAndParse(self):
+        self.fsearch()
+        return self.parse()
 
     def parse(self):
-        for i in range(0, self.cnt // 100):
-            paperDataParams = {'key' : self.key, 'apiCode' : 'articleSearch',
-                'page' : i + self.basePage, 'displayCount' : 100
-            }
+        for page in self.__pages:
+            root = ET.fromstring(page)
 
-            if self.searchMode == self.TITLE_MODE:
-                paperDataParams['title'] = self.searchStr
-            elif self.searchMode == self.AUTHOR_MODE:
-                paperDataParams['author'] = self.searchStr
-            elif self.searchMode == self.JORNAL_MODE:
-                paperDataParams['journal'] = self.searchStr
-            elif self.searchMode == self.INSTITUTION_MODE:
-                paperDataParams['institution'] = self.searchStr
-            else:
-                raise ValueError('Invalid search mode')
+            for item in root.iter('record'):
+                jour = item.find('journalInfo')
+                arti = item.find('articleInfo')
 
-            response = requests.get(self.paperDataURL, params=paperDataParams)
-            self.parseFromXMLStr( response.text, False )
+                self.papers.append(
+                        Paper(title=self.__getTitle(arti),
+                        author=', '.join( self.__getAuthor(arti) ),
+                        year=self.__getPubYear(jour),
+                        school='',
+                        doi=self.__getDOI(arti),
+                        url=self.__getURL(arti),
+                        abstract=self.__getAbstract(arti),
+                        citationCnt=self.__getCitationCount(arti)
+                    )
+                )
 
-    def printAsXML(self, file=None):
-        for i, root in enumerate(self.roots):
-            print( ET.tostring(root, encoding='utf8').decode('utf8'),
-                file=open(file+str(i), 'w', encoding='utf-8') if file is not None else None
-            )
+        return self.papers
 
     def __getItem(self, item, tag):
         tag = item.find(tag)
         return tag.text if tag is not None else None
     
-    def getPubYear(self, item):
+    def __getPubYear(self, item):
         return self.__getItem(item, 'pub-year')
     
-    def getTitle(self, item):
+    def __getTitle(self, item):
         title_group = item.find('title-group')
         article_title = title_group.find('article-title')
         return article_title.text
     
-    def getAuthor(self, item):
+    def __getAuthor(self, item):
         result = []
         author_group = item.find('author-group')
         for author in author_group.findall('author'):
             result.append(author.text)
         return result
     
-    def getAbstract(self, item):
+    def __getAbstract(self, item):
         abst_group = item.find('abstract-group')
         return self.__getItem(abst_group, 'abstract')
     
-    def getDOI(self, item):
+    def __getDOI(self, item):
         return self.__getItem(item, 'doi')
     
-    def getURL(self, item):
+    def __getURL(self, item):
         return self.__getItem(item, 'url')
     
-    def getCitationCount(self, item):
+    def __getCitationCount(self, item):
         return self.__getItem(item, 'citation-count')
     
-    def getJournal(self, item):
+    def __getJournal(self, item):
         return self.__getItem(item, 'journal')
     
-    def getVolume(self, item):
+    def __getVolume(self, item):
         return self.__getItem(item, 'volume')
     
-    def getIssue(self, item):
+    def __getIssue(self, item):
         return self.__getItem(item, 'issue')
 
+    # TODO: Add DetailParser Class and implement the following methods
+
+    # def __searchDetail(self, articleId):
+    #     params = {'key' : self.__key, 'apiCode' : 'articleDetail',
+    #         'id' : articleId
+    #     }
+    #     self.__details.append(
+    #         requests.get(self.__paperDataURL, params=params)
+    #     )
+
+    #     # one-based index
+    # def __getDetail(self, idx):
+    #     return self.__details[idx - (self.__basePage - 1) * 100 - 1]
+
 if __name__ == '__main__':
-    parser = xmlParsing(papery.KEY, "김영식", papery.paperDataUrl, 1, 300)
-    parser.authorMode()
-    parser.parse()
-    parser.printAsXML('김영식.xml')
+    xmls = PageParser(papery.KEY, "사랑", PageParser.TITLE_MODE, papery.paperDataUrl, 1, 300).isearch()
+    for i, xml in enumerate(xmls):
+        with open("사랑.xml" + str(i), 'w', encoding='utf-8') as f:
+            f.write(xml)

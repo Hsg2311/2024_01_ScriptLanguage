@@ -73,10 +73,10 @@ class SearchTab:
         )
 
     def search(self):
-        # self.board.search(self.searchStr.get())
+        self.board.search(self.searchStr.get())
 
         # temporary implementation
-        self.board.loadCache(self.searchStr.get())
+        # self.board.loadCache(self.searchStr.get())
 
         self.update()
 
@@ -120,7 +120,10 @@ class SearchTab:
         ).grid(row=0, column=trayLen+1)
         self.pageTray.grid_columnconfigure(trayLen+1, weight=1)
 
-        self.pageTrayButtons[(self.board.pageNum - 1) % Board.PAGE_CNT_IN_A_TRAY]['bg'] = 'light gray'
+        idx = (self.board.pageNum - 1) % Board.PAGE_CNT_IN_A_TRAY
+        
+        if self.pageTrayButtons[idx] is not None:
+            self.pageTrayButtons[idx]['bg'] = 'light gray'
             
     def selectPage(self, i):
         self.board.selectPage(i)
