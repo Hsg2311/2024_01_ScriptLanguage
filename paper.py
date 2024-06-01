@@ -1,13 +1,23 @@
 class Paper:
-    def __init__(self, title, author, year, school=None, doi=None, url=None, abstract=None, citationCnt=None):
+    def __init__( self, title = None, authors = None, year = None,
+        authorInsts = None, journal = None, volume = None, issue = None,
+        doi = None, url = None, abstract = None, citationCnt = None,
+        keywords = None, refs = None, institution = None
+    ):
         self.title = title
-        self.author = author
+        self.authors = authors
         self.year = year
-        self.school = school
+        self.authorInsts = authorInsts
+        self.journal = journal
+        self.volume = volume
+        self.issue = issue
         self.doi = doi
         self.url = url
         self.abstract = abstract
         self.citationCnt = citationCnt
+        self.keywords = keywords
+        self.refs = refs
+        self.institution = institution
 
         self.hasBookmark = False
         self.hasMemo = False
@@ -34,4 +44,4 @@ class Paper:
         if self.doi is not None and value.doi is not None:
             return self.doi == value.doi
         
-        return self.title == value.title and self.author == value.author and self.year == value.year
+        return self.title == value.title and self.authors == value.authors and self.year == value.year

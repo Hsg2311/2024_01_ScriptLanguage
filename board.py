@@ -55,16 +55,8 @@ class Board:
         self.papers = []
 
         for parseResult in parseResults:
-            self.papers.append( Paper(
-                parseResult.title,
-                ', '.join(parseResult.authors),
-                parseResult.year,
-                '',
-                parseResult.doi,
-                parseResult.url,
-                parseResult.abstract,
-                parseResult.citationCnt
-            ) )
+            self.papers.append( Paper() )
+            parseResult.reflect(self.papers[-1])
 
     def selectPage(self, pageNum):
         self.pageNum = pageNum
@@ -100,7 +92,7 @@ class Record:
         self.widget = Text(self.master, font = GuiConfig.cFont, wrap=WORD)
 
         recordStr = ' | '.join(
-            [paper.title, paper.author, paper.year]
+            [paper.title, ', '.join(paper.authors), paper.year]
         )
         self.widget.insert(END, recordStr)
 

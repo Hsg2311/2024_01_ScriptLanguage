@@ -64,7 +64,7 @@ class ViewTab:
 
         # row 0 - title
         titleStr = self.paper.title + '\n' + ' | '.join(
-            [self.paper.author, self.paper.year]
+            [', '.join( self.paper.authors ), self.paper.year]
         )
         tTitle = create_centered_text_widget(
             self.paperFrame, GuiConfig.paperTitleFont, titleStr, 2

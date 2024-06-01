@@ -160,6 +160,19 @@ class PageParseResult:
         self.url = url
         self.citationCnt = citationCnt
 
+    def reflect(self, paper):
+        paper.title = self.title
+        paper.authors = self.authors
+        paper.year = self.year
+        paper.abstract = self.abstract
+        paper.journal = self.journal
+        paper.institution = self.institution
+        paper.volume = self.volume
+        paper.issue = self.issue
+        paper.doi = self.doi
+        paper.url = self.url
+        paper.citationCnt = self.citationCnt
+
 class DetailParser:
     def __init__(self, articleID):
         self.__key = papery.KEY
@@ -250,6 +263,11 @@ class DetailParseResult:
         self.keywords = keywords
         self.refs = refs
         self.authorInsts = authorInsts
+
+    def reflect(self, paper):
+        paper.keywords = self.keywords
+        paper.refs = self.refs
+        paper.authorInsts = self.authorInsts
 
 if __name__ == '__main__':
     # xmls = PageParser("사랑", PageParser.TITLE_MODE, 1, 300).isearch()
