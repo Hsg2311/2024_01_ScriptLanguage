@@ -5,13 +5,14 @@ import requests
 import os
 
 class PageParser:
+    KCI = 'KCI'
+    GOOGLE_SCHOLAR = 'Google Scholar'
     TITLE_MODE = 0
     AUTHOR_MODE = 1
     JORNAL_MODE = 2
     INSTITUTION_MODE = 3
 
-    def __init__(self, searchStr, searchMode, basePage, parseCnt
-    ):
+    def __init__(self, searchStr, searchMode, basePage, parseCnt, source=KCI):
         self.papers = []
         self.__searchStr = searchStr
         self.__key = papery.KEY
@@ -21,9 +22,10 @@ class PageParser:
         self.__pages = []
         self.__details = []
         self.__searchMode = searchMode
+        self.__source = source
 
     # short for internet search
-    def isearch(self, willCache=True):
+    def __isearchKCI(self, willCache=True):
         for i in range(0, self.__cnt // 100):
             params = {'key' : self.__key, 'apiCode' : 'articleSearch',
                 'page' : self.__basePage + i, 'displayCount' : 100          
@@ -53,6 +55,16 @@ class PageParser:
                 f.write(xml)
 
         return self.__pages
+    
+    def __isearchGoogleScholar(self, willCache=True):
+        pass
+
+    def isearch(self, willCache=True):
+        if self.__source == self.KCI:
+            return self.__isearchKCI(willCache)
+        elif self.__source == self.GOOGLE_SCHOLAR:
+            return self.__isearchGoogleScholar(willCache)
+        raise ValueError('Invalid source')
 
     # short for file search
     # expect the file to be named as @.xml#
@@ -199,14 +211,18 @@ class PageParseResult:
         paper.articleID = self.articleID
 
 class DetailParser:
-    def __init__(self, articleID):
+    KCI = 'KCI'
+    GOOGLE_SCHOLAR = 'Google Scholar'
+
+    def __init__(self, articleID, source=KCI):
         self.__key = papery.KEY
         self.__paperDataURL = papery.paperDataUrl
         self.__articleID = articleID
         self.__detail = None
+        self.__source = source
 
     # short for internet search
-    def isearch(self, willCache=True):
+    def __isearchKCI(self, willCache=True):
         params = {'key' : self.__key, 'apiCode' : 'articleDetail',
             'id' : self.__articleID
         }
@@ -219,6 +235,16 @@ class DetailParser:
             f.write(self.__detail)
 
         return self.__detail
+    
+    def __isearchGoogleScholar(self, willCache=True):
+        pass
+
+    def isearch(self, willCache=True):
+        if self.__source == self.KCI:
+            return self.__isearchKCI(willCache)
+        elif self.__source == self.GOOGLE_SCHOLAR:
+            return self.__isearchGoogleScholar(willCache)
+        raise ValueError('Invalid source')
     
     # short for file search
     # expect the file to be named as #.xml
