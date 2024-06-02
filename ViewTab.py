@@ -166,7 +166,7 @@ class ViewTab:
         self.clear()
         self.paper = paper
         if self.paper.articleID is not None:
-            DetailParser(self.paper.articleID).isearchAndParse().reflect(self.paper)
+            DetailParser(self.paper.articleID).searchAndParse().reflect(self.paper)
         self.initWidgets()
 
     def openDOI(self):

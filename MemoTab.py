@@ -5,6 +5,7 @@ from tkinter import scrolledtext
 from xml.dom import minidom
 
 import GuiConfig
+import papery
 
 # smtp 정보
 host = "smtp.gmail.com" # Gmail SMTP 서버 주소.
@@ -82,7 +83,7 @@ class MemoTab:
 
     def loadXML(self):
         try:
-            doc = minidom.parse("memo.xml")
+            doc = minidom.parse(papery.CACHE_PREFIX + "memo.xml")
             memos = doc.getElementsByTagName("memo")
             for i, memo in enumerate(memos):
                 text = memo.firstChild.nodeValue

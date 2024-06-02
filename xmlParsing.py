@@ -23,7 +23,7 @@ class PageParser:
         self.__searchMode = searchMode
 
     # short for internet search
-    def isearch(self):
+    def isearch(self, willCache=True):
         for i in range(0, self.__cnt // 100):
             params = {'key' : self.__key, 'apiCode' : 'articleSearch',
                 'page' : self.__basePage + i, 'displayCount' : 100          
@@ -44,6 +44,14 @@ class PageParser:
                  requests.get(self.__paperDataURL, params=params).text
             )
         
+        if not willCache:
+            return self.__pages
+        
+        for i, xml in enumerate(self.__pages):
+            path = papery.CACHE_PREFIX + self.__searchStr + '.xml' + str(i)
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write(xml)
+
         return self.__pages
 
     # short for file search
@@ -52,7 +60,7 @@ class PageParser:
     def fsearch(self):
         i = 0
         while True:
-            file_path = self.__searchStr + str(i)
+            file_path = papery.CACHE_PREFIX + self.__searchStr + '.xml' + str(i)
 
             if os.path.isfile(file_path):
                 self.__pages.append( open(file_path, 'r', encoding='utf-8').read() )
@@ -62,17 +70,28 @@ class PageParser:
             i += 1
 
         return self.__pages if len(self.__pages) > 0 else None
+    
+    def search(self, willCache=True):
+        fResult = self.fsearch()
+        if fResult is not None:
+            return fResult
+        
+        return self.isearch(willCache)
 
     # one-based index
     def __getPage(self, idx):
         return self.__pages[idx - self.__basePage]
 
-    def iSearchAndParse(self):
-        self.isearch()
+    def isearchAndParse(self, willCache=True):
+        self.isearch(willCache)
         return self.parse()
 
-    def fSearchAndParse(self):
+    def fsearchAndParse(self):
         self.fsearch()
+        return self.parse()
+    
+    def searchAndParse(self, willCache=True):
+        self.search(willCache)
         return self.parse()
 
     def parse(self):
@@ -187,11 +206,17 @@ class DetailParser:
         self.__detail = None
 
     # short for internet search
-    def isearch(self):
+    def isearch(self, willCache=True):
         params = {'key' : self.__key, 'apiCode' : 'articleDetail',
             'id' : self.__articleID
         }
         self.__detail = requests.get(self.__paperDataURL, params=params).text
+
+        if not willCache:
+            return self.__detail
+        
+        with open(papery.CACHE_PREFIX + self.__articleID + '.xml', 'w', encoding='utf-8') as f:
+            f.write(self.__detail)
 
         return self.__detail
     
@@ -199,14 +224,19 @@ class DetailParser:
     # expect the file to be named as #.xml
     # where # is the article ID
     def fsearch(self):
-        file_path = self.__articleID + '.xml'
+        file_path = papery.CACHE_PREFIX + self.__articleID + '.xml'
 
         if os.path.isfile(file_path):
             self.__detail = open(file_path, 'r', encoding='utf-8').read()
-        else:
-            raise FileNotFoundError('No such file')
 
         return self.__detail if self.__detail is not None else None
+    
+    def search(self, willCache=True):
+        fResult = self.fsearch()
+        if fResult is not None:
+            return fResult
+        
+        return self.isearch(willCache)
     
     def parse(self):
         refs = []
@@ -224,12 +254,16 @@ class DetailParser:
 
         return DetailParseResult(keywords, refs, authorInsts)
 
-    def isearchAndParse(self):
-        self.isearch()
+    def isearchAndParse(self, willCache=True):
+        self.isearch(willCache)
         return self.parse()
     
     def fsearchAndParse(self):
         self.fsearch()
+        return self.parse()
+    
+    def searchAndParse(self, willCache=True):
+        self.search(willCache)
         return self.parse()
     
     def __getItem(self, item, tag):
@@ -276,11 +310,6 @@ class DetailParseResult:
         paper.authorInsts = self.authorInsts
 
 if __name__ == '__main__':
-    # xmls = PageParser("사랑", PageParser.TITLE_MODE, 1, 300).isearch()
-    # for i, xml in enumerate(xmls):
-    #     with open("사랑.xml" + str(i), 'w', encoding='utf-8') as f:
-    #         f.write(xml)
-
     r = DetailParser('ART001564843').isearchAndParse()
     print('keywords:', r.keywords)
     print('references:', r.refs)

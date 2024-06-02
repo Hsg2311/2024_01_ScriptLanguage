@@ -50,7 +50,7 @@ class Board:
 
         parseResults = PageParser( searchStr, PageParser.TITLE_MODE, remotePageStart,
             Board.SEARCH_UNIT * (remotePageEnd - remotePageStart + 1)
-        ).iSearchAndParse()
+        ).searchAndParse()
 
         self.papers = []
 
