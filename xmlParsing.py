@@ -6,7 +6,7 @@ import os
 
 class PageParser:
     KCI = 'KCI'
-    GOOGLE_SCHOLAR = 'Google Scholar'
+    SCOPUS = 'Scopus'
     TITLE_MODE = 0
     AUTHOR_MODE = 1
     JOURNAL_MODE = 2
@@ -56,14 +56,14 @@ class PageParser:
 
         return self.__pages
     
-    def __isearchGoogleScholar(self, willCache=True):
+    def __isearchScopus(self, willCache=True):
         pass
 
     def isearch(self, willCache=True):
         if self.__source == self.KCI:
             return self.__isearchKCI(willCache)
-        elif self.__source == self.GOOGLE_SCHOLAR:
-            return self.__isearchGoogleScholar(willCache)
+        elif self.__source == self.SCOPUS:
+            return self.__isearchScopus(willCache)
         raise ValueError('Invalid source')
 
     # short for file search
@@ -212,7 +212,7 @@ class PageParseResult:
 
 class DetailParser:
     KCI = 'KCI'
-    GOOGLE_SCHOLAR = 'Google Scholar'
+    SCOPUS = 'Scopus'
 
     def __init__(self, articleID, source=KCI):
         self.__key = papery.KEY
@@ -236,14 +236,14 @@ class DetailParser:
 
         return self.__detail
     
-    def __isearchGoogleScholar(self, willCache=True):
+    def __isearchScopus(self, willCache=True):
         pass
 
     def isearch(self, willCache=True):
         if self.__source == self.KCI:
             return self.__isearchKCI(willCache)
-        elif self.__source == self.GOOGLE_SCHOLAR:
-            return self.__isearchGoogleScholar(willCache)
+        elif self.__source == self.SCOPUS:
+            return self.__isearchScopus(willCache)
         raise ValueError('Invalid source')
     
     # short for file search
