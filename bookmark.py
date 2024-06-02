@@ -7,6 +7,9 @@ class Node:
         self.children.append(node)
         node.parent = self
 
+    def compare(self, key):
+        return self.key == key
+
     def delete(self, node):
         if node not in self.children:
             return

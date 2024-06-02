@@ -5,8 +5,7 @@ from tkinter import ttk
 from tkinter import simpledialog
 
 import bookmark
-
-BookmarkRoot = bookmark.Category("Root")
+from BookmarkRoot import root
 
 class BookmarkTab:
     def __init__(self, mainGUI):
@@ -16,7 +15,6 @@ class BookmarkTab:
         self.frame = Frame(self.master)
         self.frame.pack()
 
-        global BookmarkRoot
         # show bookmark tree as treeview
         self.style = ttk.Style()
         self.style.configure('Treeview', font=('Helvetica', 14), rowheight=30)
@@ -35,9 +33,12 @@ class BookmarkTab:
         expandAllItems(self.tree)
 
     def insertNode(self, node, parent = None):
+        global root
+
         if isinstance(node, bookmark.Category):
             if isinstance(parent, bookmark.Category):
                 self.tree.insert(parent.name, "end", text=node.name, iid=node.name)
+                root.insert(bookmark.Category('name'), node.name)
             elif isinstance(parent, bookmark.BookmarkItem):
                 self.tree.insert(parent.paper, "end", text=node.name, iid=node.name)
             else:
@@ -57,10 +58,10 @@ class BookmarkTab:
         name = simpledialog.askstring("카테고리 이름 설정", "카테고리 이름을 입력하세요:")
         c = bookmark.Category(name)
         self.insertNode(c)
-        global BookmarkRoot
-        BookmarkRoot.insert(c)
 
     def delCategory(self):
+        global root
+
         selected_item = self.tree.selection()
         if selected_item:
             self.tree.delete(selected_item)

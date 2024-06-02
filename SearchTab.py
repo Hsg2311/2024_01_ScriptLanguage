@@ -1,10 +1,16 @@
 from tkinter import *
 from tkinter import messagebox
+from tkinter import Toplevel
+from tkinter import ttk
+from tkinter import simpledialog
 
 from paper import Paper
 from board import Board, Record
 
 import GuiConfig
+
+import bookmark
+from BookmarkRoot import root
 
 class SearchTab:
     def __init__(self, mainGUI):
@@ -71,6 +77,46 @@ class SearchTab:
             width=GuiConfig.SEARCH_VIEW_BUTTON_WIDTH, height=GuiConfig.SEARCH_VIEW_BUTTON_HEIGHT,
             anchor=NW                      
         )
+
+        self.StarImage = PhotoImage(file='노란 별.png')
+        self.bmButton = Button(self.result, image=self.StarImage, command=self.bookmark)
+        self.bmButton.place( x=600, y=100, width=50, height=50 )
+
+    def bookmark(self):
+        item = self.resultList.focus_get()
+        if not isinstance(item, Text):
+            return
+        
+        for rec in self.curRecords:
+            if rec.owns(item):
+                new_window = Toplevel(self.mainGUI.master)
+                new_window.title('북마크')
+                new_window.geometry('250x300')
+
+                new_window_frame = Frame(new_window, bg='white')
+                new_window_frame.pack(expand=True, fill='both')
+
+                global root
+
+                style = ttk.Style()
+                style.configure('Treeview', font=('Helvetica', 14), rowheight=30)
+
+                self.tree = ttk.Treeview(new_window_frame)
+                self.tree.place(x=0, y=0, width=200, height=300)
+
+                addButton = Button(new_window_frame, text='+', command=self.addCategory)
+                addButton.place(x=205, y=0, width=40, height=40)
+                delButton = Button(new_window_frame, text='-', command=self.delCategory)
+                delButton.place(x=205, y=50, width=40, height=40)
+                ncButton = Button(new_window_frame, text='수정', command=self.changeItemName)
+                ncButton.place(x=205, y=100, width=40, height=40)
+
+                expandAllItems(self.tree)
+
+    def addBookmarkTab(self, bmTab):
+        # self.bmTab = BookmarkTab(self.new_window)
+        # self.syncBmTab = bmTab
+        pass
 
     def search(self):
         # self.board.search(self.searchStr.get())
@@ -151,3 +197,47 @@ class SearchTab:
                 self.mainGUI.viewTab.setPaper(rec.paper)
 
         self.mainGUI.viewTab.show(self)
+
+    def insertNode(self, node, parent = None):
+        if isinstance(node, bookmark.Category):
+            if isinstance(parent, bookmark.Category):
+                self.tree.insert(parent.name, "end", text=node.name, iid=node.name)
+            elif isinstance(parent, bookmark.BookmarkItem):
+                self.tree.insert(parent.paper, "end", text=node.name, iid=node.name)
+            else:
+                self.tree.insert("", "end", text=node.name, iid=node.name)
+        else:
+            if isinstance(parent, bookmark.Category):
+                self.tree.insert(parent.name, "end", text=node.paper, iid=node.paper)
+            elif isinstance(parent, bookmark.BookmarkItem):
+                self.tree.insert(parent.paper, "end", text=node.paper, iid=node.paper)
+            else:
+                self.tree.insert("", "end", text=node.paper, iid=node.paper)
+
+        for child in node.children:
+            self.insertNode(child, node)
+
+    def addCategory(self):
+        name = simpledialog.askstring("카테고리 이름 설정", "카테고리 이름을 입력하세요:")
+        c = bookmark.Category(name)
+        self.insertNode(c)
+        global root
+        root.insert(c)
+
+    def delCategory(self):
+        selected_item = self.tree.selection()
+        if selected_item:
+            self.tree.delete(selected_item)
+
+    def changeItemName(self):
+        selected_items = self.tree.selection()
+        if selected_items:  # 선택된 아이템이 있는지 확인
+            new_name = simpledialog.askstring("카테고리 이름 변경", "새 이름을 입력하세요:")
+            if new_name:  # 사용자가 이름을 입력하고 'OK'를 누른 경우
+                for item in selected_items:
+                    self.tree.item(item, text=new_name)  # 선택된 아이템의 이름을 새로운 이름으로 변경
+
+def expandAllItems(tree, item=''):
+    for child in tree.get_children(item):
+        tree.item(child, open=True)
+        expandAllItems(tree, child)

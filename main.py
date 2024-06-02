@@ -27,6 +27,7 @@ class MainGUI:
 
         self.bookmarkTab = BookmarkTab(self)
         self.notebook.add(self.bookmarkTab.frame, text="북마크")
+        self.searchTab.addBookmarkTab(self.bookmarkTab)
 
         self.memoTab = MemoTab(self)
         self.notebook.add(self.memoTab.frame, text="메모")
