@@ -9,7 +9,7 @@ class PageParser:
     GOOGLE_SCHOLAR = 'Google Scholar'
     TITLE_MODE = 0
     AUTHOR_MODE = 1
-    JORNAL_MODE = 2
+    JOURNAL_MODE = 2
     INSTITUTION_MODE = 3
 
     def __init__(self, searchStr, searchMode, basePage, parseCnt, source=KCI):
@@ -35,7 +35,7 @@ class PageParser:
                 params['title'] = self.__searchStr
             elif self.__searchMode == self.AUTHOR_MODE:
                 params['author'] = self.__searchStr
-            elif self.__searchMode == self.JORNAL_MODE:
+            elif self.__searchMode == self.JOURNAL_MODE:
                 params['journal'] = self.__searchStr
             elif self.__searchMode == self.INSTITUTION_MODE:
                 params['institution'] = self.__searchStr
