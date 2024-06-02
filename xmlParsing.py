@@ -4,122 +4,339 @@ import xml.etree.ElementTree as ET
 import requests
 import os
 
-class xmlParsing:
-    def __init__(self, apiKey, searchStr, paperDataURL, basePage, parseCnt):
+class PageParser:
+    KCI = 'KCI'
+    GOOGLE_SCHOLAR = 'Google Scholar'
+    TITLE_MODE = 0
+    AUTHOR_MODE = 1
+    JOURNAL_MODE = 2
+    INSTITUTION_MODE = 3
+
+    def __init__(self, searchStr, searchMode, basePage, parseCnt, source=KCI):
         self.papers = []
-        self.searchStr = searchStr
-        self.key = apiKey
-        self.paperDataURL = paperDataURL
-        self.basePage = basePage
-        self.cnt = parseCnt
-        self.roots = []
+        self.__searchStr = searchStr
+        self.__key = papery.KEY
+        self.__paperDataURL = papery.paperDataUrl
+        self.__basePage = basePage
+        self.__cnt = parseCnt
+        self.__pages = []
+        self.__details = []
+        self.__searchMode = searchMode
+        self.__source = source
 
-    def printPapers(self, file=None):
-        for paper in self.papers:
-            print('Year :', paper.year, file=file)
-            print('Title :', paper.title, file=file)
-            print('Author :', paper.author, file=file)
-            print('Abstract :', paper.abstract, file=file)
-            print('DOI :', paper.doi if paper.doi is not None else 'DOI 정보가 없습니다.', file=file)
-            print('URL :', paper.url if paper.url is not None else 'URL 정보가 없습니다.', file=file)
-            print('Citation Count :', paper.citationCnt, file=file)
-            print(file=file)
+    # short for internet search
+    def __isearchKCI(self, willCache=True):
+        for i in range(0, self.__cnt // 100):
+            params = {'key' : self.__key, 'apiCode' : 'articleSearch',
+                'page' : self.__basePage + i, 'displayCount' : 100          
+            }
 
-    def parseFromXMLFile(self, xmlFile):
+            if self.__searchMode == self.TITLE_MODE:
+                params['title'] = self.__searchStr
+            elif self.__searchMode == self.AUTHOR_MODE:
+                params['author'] = self.__searchStr
+            elif self.__searchMode == self.JOURNAL_MODE:
+                params['journal'] = self.__searchStr
+            elif self.__searchMode == self.INSTITUTION_MODE:
+                params['institution'] = self.__searchStr
+            else:
+                raise ValueError('Invalid search mode')
+            
+            self.__pages.append(
+                 requests.get(self.__paperDataURL, params=params).text
+            )
+        
+        if not willCache:
+            return self.__pages
+        
+        for i, xml in enumerate(self.__pages):
+            path = papery.CACHE_PREFIX + self.__searchStr + '.xml' + str(i)
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write(xml)
+
+        return self.__pages
+    
+    def __isearchGoogleScholar(self, willCache=True):
+        pass
+
+    def isearch(self, willCache=True):
+        if self.__source == self.KCI:
+            return self.__isearchKCI(willCache)
+        elif self.__source == self.GOOGLE_SCHOLAR:
+            return self.__isearchGoogleScholar(willCache)
+        raise ValueError('Invalid source')
+
+    # short for file search
+    # expect the file to be named as @.xml#
+    # where @ is the search string and # is the page number
+    def fsearch(self):
         i = 0
         while True:
-            file_path = xmlFile + str(i)
+            file_path = papery.CACHE_PREFIX + self.__searchStr + '.xml' + str(i)
 
             if os.path.isfile(file_path):
-                self.parseFromXMLStr(open(file_path, 'r', encoding='utf-8').read())
+                self.__pages.append( open(file_path, 'r', encoding='utf-8').read() )
             else:
                 break
 
             i += 1
 
-    def parseFromXMLStr(self, xmlStr, buildNewRoot=True):
-        root = ET.fromstring(xmlStr)
-        if buildNewRoot:
-            self.roots.clear()
-        self.roots.append(root)
+        return self.__pages if len(self.__pages) > 0 else None
+    
+    def search(self, willCache=True):
+        fResult = self.fsearch()
+        if fResult is not None:
+            return fResult
+        
+        return self.isearch(willCache)
 
-        for item in root.iter('record'):
-            jour = item.find('journalInfo')
-            arti = item.find('articleInfo')
+    # one-based index
+    def __getPage(self, idx):
+        return self.__pages[idx - self.__basePage]
 
-            self.papers.append( Paper(
-                title=self.getTitle(arti),
-                author=', '.join( self.getAuthor(arti) ),
-                year=self.getPubYear(jour),
-                school='',
-                doi=self.getDOI(arti),
-                url=self.getURL(arti),
-                abstract=self.getAbstract(arti),
-                citationCnt=self.getCitationCount(arti)
-            ) )
+    def isearchAndParse(self, willCache=True):
+        self.isearch(willCache)
+        return self.parse()
+
+    def fsearchAndParse(self):
+        self.fsearch()
+        return self.parse()
+    
+    def searchAndParse(self, willCache=True):
+        self.search(willCache)
+        return self.parse()
 
     def parse(self):
-        for i in range(0, self.cnt // 100):
-            paperDataParams = {'key' : self.key, 'apiCode' : 'articleSearch',
-                'title' : self.searchStr, 'page' : i + self.basePage,
-                'displayCount' : 100
-            }
-            response = requests.get(self.paperDataURL, params=paperDataParams)
-            self.parseFromXMLStr( response.text, False )
+        for page in self.__pages:
+            root = ET.fromstring(page)
 
-    def printAsXML(self, file=None):
-        for i, root in enumerate(self.roots):
-            print( ET.tostring(root, encoding='utf8').decode('utf8'),
-                file=open(file+str(i), 'w', encoding='utf-8') if file is not None else None
-            )
+            for item in root.iter('record'):
+                jour = item.find('journalInfo')
+                arti = item.find('articleInfo')
 
-    def getPubYear(self, item):
-        year = item.find('pub-year')
-        return year.text
+                self.papers.append( PageParseResult(
+                    self.__getArticleID(arti),
+                    self.__getTitle(arti),
+                    self.__getAuthorNames(arti),
+                    self.__getPubYear(jour),
+                    self.__getAbstract(arti),
+                    self.__getJournal(jour),
+                    self.__getInstitution(jour),
+                    self.__getVolume(jour),
+                    self.__getIssue(jour),
+                    self.__getDOI(arti),
+                    self.__getURL(arti),
+                    self.__getCitationCount(arti)
+                ) )
 
-    def getTitle(self, item):
-        # 상위 엘리먼트에서부터 찾으면서 내려와야 함.
+        return self.papers
+
+    def __getItem(self, item, tag):
+        tag = item.find(tag)
+        return tag.text if tag is not None else None
+    
+    def __getArticleID(self, item):
+        return item.attrib['article-id']
+
+    def __getPubYear(self, item):
+        return self.__getItem(item, 'pub-year')
+    
+    def __getTitle(self, item):
         title_group = item.find('title-group')
         article_title = title_group.find('article-title')
         return article_title.text
     
-    def getAuthor(self, item):
+    def __getAuthorNames(self, item):
         result = []
         author_group = item.find('author-group')
         for author in author_group.findall('author'):
             result.append(author.text)
         return result
     
-    def getAbstract(self, item):
+    def __getAbstract(self, item):
         abst_group = item.find('abstract-group')
-        abst = abst_group.find('abstract')
+        return self.__getItem(abst_group, 'abstract')
+    
+    def __getDOI(self, item):
+        return self.__getItem(item, 'doi')
+    
+    def __getURL(self, item):
+        return self.__getItem(item, 'url')
+    
+    def __getCitationCount(self, item):
+        return self.__getItem(item, 'citation-count')
+    
+    def __getJournal(self, item):
+        return self.__getItem(item, 'journal-name')
+    
+    def __getVolume(self, item):
+        return self.__getItem(item, 'volume')
+    
+    def __getIssue(self, item):
+        return self.__getItem(item, 'issue')
+    
+    def __getInstitution(self, item):
+        return self.__getItem(item, 'publisher-name')
+    
+class PageParseResult:
+    def __init__(self, articleID, title, authors,
+        year, abstract ,journal, institution,
+        volume, issue, doi, url, citationCnt
+    ):
+        self.articleID = articleID
+        self.title = title
+        self.authors = authors
+        self.year = year
+        self.abstract = abstract
+        self.journal = journal
+        self.institution = institution
+        self.volume = volume
+        self.issue = issue
+        self.doi = doi
+        self.url = url
+        self.citationCnt = citationCnt
 
-        if abst.text is None:
-            return '논문 초록이 제공되지 않습니다.'
-        else:
-            return abst.text
+    def reflect(self, paper):
+        paper.title = self.title
+        paper.authors = self.authors
+        paper.year = self.year
+        paper.abstract = self.abstract
+        paper.journal = self.journal
+        paper.institution = self.institution
+        paper.volume = self.volume
+        paper.issue = self.issue
+        paper.doi = self.doi
+        paper.url = self.url
+        paper.citationCnt = self.citationCnt
+        paper.articleID = self.articleID
 
-    def getDOI(self, item):
-        doi = item.find('doi')
+class DetailParser:
+    KCI = 'KCI'
+    GOOGLE_SCHOLAR = 'Google Scholar'
 
-        if doi.text is None:
-            return None
-        else:
-            return doi.text
+    def __init__(self, articleID, source=KCI):
+        self.__key = papery.KEY
+        self.__paperDataURL = papery.paperDataUrl
+        self.__articleID = articleID
+        self.__detail = None
+        self.__source = source
 
-    def getURL(self, item):
-        url = item.find('url')
+    # short for internet search
+    def __isearchKCI(self, willCache=True):
+        params = {'key' : self.__key, 'apiCode' : 'articleDetail',
+            'id' : self.__articleID
+        }
+        self.__detail = requests.get(self.__paperDataURL, params=params).text
 
-        if url.text is None:
-            return None
-        else:
-            return url.text
+        if not willCache:
+            return self.__detail
+        
+        with open(papery.CACHE_PREFIX + self.__articleID + '.xml', 'w', encoding='utf-8') as f:
+            f.write(self.__detail)
 
-    def getCitationCount(self, item):
-        cnt = item.find('citation-count')
-        return cnt.text
+        return self.__detail
+    
+    def __isearchGoogleScholar(self, willCache=True):
+        pass
+
+    def isearch(self, willCache=True):
+        if self.__source == self.KCI:
+            return self.__isearchKCI(willCache)
+        elif self.__source == self.GOOGLE_SCHOLAR:
+            return self.__isearchGoogleScholar(willCache)
+        raise ValueError('Invalid source')
+    
+    # short for file search
+    # expect the file to be named as #.xml
+    # where # is the article ID
+    def fsearch(self):
+        file_path = papery.CACHE_PREFIX + self.__articleID + '.xml'
+
+        if os.path.isfile(file_path):
+            self.__detail = open(file_path, 'r', encoding='utf-8').read()
+
+        return self.__detail if self.__detail is not None else None
+    
+    def search(self, willCache=True):
+        fResult = self.fsearch()
+        if fResult is not None:
+            return fResult
+        
+        return self.isearch(willCache)
+    
+    def parse(self):
+        refs = []
+        keywords = []
+        authorInsts = []
+
+        root = ET.fromstring(self.__detail)
+        for item in root.iter('record'):
+            arti = item.find('articleInfo')
+            ref = item.find('referenceInfo')
+
+            refs.extend( self.__getRefs(ref) )
+            keywords.extend( self.__getKeywords(arti) )
+            authorInsts.extend( self.__getAuthorInsts(arti) )
+
+        return DetailParseResult(keywords, refs, authorInsts)
+
+    def isearchAndParse(self, willCache=True):
+        self.isearch(willCache)
+        return self.parse()
+    
+    def fsearchAndParse(self):
+        self.fsearch()
+        return self.parse()
+    
+    def searchAndParse(self, willCache=True):
+        self.search(willCache)
+        return self.parse()
+    
+    def __getItem(self, item, tag):
+        tag = item.find(tag)
+        return tag.text if tag is not None else None
+    
+    def __getKeywords(self, item):
+        result = []
+        keyword_group = item.find('keyword-group')
+        for keyword in keyword_group.findall('keyword'):
+            result.append(keyword.text)
+        return result
+    
+    def __getRefs(self, item):
+        refs = []
+
+        for ref_item in item.findall('reference'):
+            titleObj = ref_item.find('title')
+            if titleObj is not None:
+                refs.append( ref_item.attrib['type-name'] + ' | ' + titleObj.text )
+            else:
+                refs.append( ref_item.attrib['type-name'] + ' | ' + ref_item.text )
+
+        return refs if len(refs) > 0 else None
+    
+    def __getAuthorInsts(self, item):
+        result = []
+        author_group = item.find('author-group')
+
+        for author in author_group.findall('author'):
+            result.append( author.find('institution').text )
+        
+        return result
+    
+class DetailParseResult:
+    def __init__(self, keywords, refs, authorInsts):
+        self.keywords = keywords
+        self.refs = refs
+        self.authorInsts = authorInsts
+
+    def reflect(self, paper):
+        paper.keywords = self.keywords
+        paper.refs = self.refs
+        paper.authorInsts = self.authorInsts
 
 if __name__ == '__main__':
-    parser = xmlParsing(papery.KEY, "게임", papery.paperDataUrl, 1, 300)
-    parser.parse()
-    parser.printAsXML('game.xml')
+    r = DetailParser('ART001564843').isearchAndParse()
+    print('keywords:', r.keywords)
+    print('references:', r.refs)
+    print('author institutions:', r.authorInsts)

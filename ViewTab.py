@@ -3,6 +3,7 @@ from tkinter import messagebox
 import GuiConfig
 import webbrowser
 from summary import Summarizer
+from xmlParsing import DetailParser
 
 class ViewTab:
     def __init__(self, mainGUI):
@@ -46,8 +47,7 @@ class ViewTab:
 
         # Create a tag for center alignment
         def create_centered_text_widget(parent, font, content, height, bg='white'):
-            frame = Frame(parent)
-            text_widget = Text(frame, font=font, wrap=WORD,
+            text_widget = Text(parent, font=font, wrap=WORD,
                 width=GuiConfig.VIEW_PAPER_WIDTH, height=height, bg=bg
             )
             text_widget.tag_configure("center", justify='center')
@@ -55,16 +55,20 @@ class ViewTab:
             text_widget.tag_add("center", "1.0", "end")
             text_widget.configure(state='disabled')  # Make it read-only
 
-            # Place the text widget in the center of the frame
-            text_widget.grid(row=0, column=0, sticky='nsew')
-            frame.rowconfigure(0, weight=1)
-            frame.columnconfigure(0, weight=1)
+            return text_widget
+        
+        def create_text_widget(parent, font, content, height, bg='white'):
+            text_widget = Text(parent, font=font, wrap=WORD,
+                width=GuiConfig.VIEW_PAPER_WIDTH, height=height, bg=bg
+            )
+            text_widget.insert(END, content)
+            text_widget.configure(state='disabled')
 
-            return frame
+            return text_widget
 
         # row 0 - title
         titleStr = self.paper.title + '\n' + ' | '.join(
-            [self.paper.author, self.paper.year]
+            [', '.join( self.paper.authors ), self.paper.year]
         )
         tTitle = create_centered_text_widget(
             self.paperFrame, GuiConfig.paperTitleFont, titleStr, 2
@@ -72,21 +76,30 @@ class ViewTab:
         tTitle.grid(row=0, column=0, sticky='nsew')
 
         # row 1 - abstract
-        tAbstract = create_centered_text_widget(
+        tAbstract = create_text_widget(
             self.paperFrame, GuiConfig.cFont, self.paper.abstract, 6
         )
         tAbstract.grid(row=1, column=0, sticky='nsew')
 
+        abstractScroll = Scrollbar(self.paperFrame, command=tAbstract.yview, orient=VERTICAL)
+        abstractScroll.grid(row=1, column=1, sticky='ns')
+        tAbstract.config(yscrollcommand=abstractScroll.set)
+
         # row 2 - reference header (using Text for word wrap and center alignment)
         tReferenceHeader = create_centered_text_widget(
-            self.paperFrame, GuiConfig.headFont, "관련 논문", 1, '#dbdfdf'
+            self.paperFrame, GuiConfig.headFont, "참조 논문", 1, '#dbdfdf'
         )
         tReferenceHeader.grid(row=2, column=0, sticky='nsew')
 
         # row 3 - reference list
-        reference_text = '현재 관련 논문 기능은 구현되어있지 않습니다.\n(참고 문헌 또는 피인용 논문 고려 구현 예정)'
-        tReference = create_centered_text_widget(self.paperFrame, GuiConfig.cFont, reference_text, 3)
+        reference_text = '\n'.join(self.paper.refs) if self.paper.refs is not None \
+            else '참조 논문 정보가 제공되지 않습니다.'
+        tReference = create_text_widget(self.paperFrame, GuiConfig.refFont, reference_text, 3)
         tReference.grid(row=3, column=0, sticky='nsew')
+
+        referenceScroll = Scrollbar(self.paperFrame, command=tReference.yview, orient=VERTICAL)
+        referenceScroll.grid(row=3, column=1, sticky='ns')
+        tReference.config(yscrollcommand=referenceScroll.set)
 
         self.paperFrame.rowconfigure(0, weight=2)
         self.paperFrame.rowconfigure(1, weight=6)
@@ -152,6 +165,8 @@ class ViewTab:
     def setPaper(self, paper):
         self.clear()
         self.paper = paper
+        if self.paper.articleID is not None:
+            DetailParser(self.paper.articleID).searchAndParse().reflect(self.paper)
         self.initWidgets()
 
     def openDOI(self):
