@@ -195,6 +195,13 @@ class ScopusPageParser:
     INSTITUTION_MODE = 3
     PAGE_SIZE = 20
 
+    XML_NAMESPACES = {
+        'atom': 'http://www.w3.org/2005/Atom',
+        'dc': 'http://purl.org/dc/elements/1.1/',
+        'opensearch': 'http://a9.com/-/spec/opensearch/1.1/',
+        'prism': 'http://prismstandard.org/namespaces/basic/2.0/'
+    }
+
     def __init__(self, searchStr, searchMode, basePage, parseCnt):
         self.__searchStr = searchStr
         self.__searchMode = searchMode
@@ -278,6 +285,84 @@ class ScopusPageParser:
             return fResult
         
         return self.isearch(willCache)
+    
+    def parse(self):
+        for page in self.__pages:
+            root = ET.fromstring(page)
+
+            for item in root.findall('atom:entry', ScopusPageParser.XML_NAMESPACES):
+                self.results.append( PageParseResult(
+                    articleID=self.__getArticleID(item),
+                    title=self.__getTitle(item),
+                    authors=self.__getAuthorNames(item),
+                    year=self.__getPubYear(item),
+                    abstract=None,
+                    # self.__getAbstract(item),
+                    journal=self.__getJournal(item),
+                    institution=self.__getInstitution(item),
+                    volume=self.__getVolume(item),
+                    issue=self.__getIssue(item),
+                    doi=self.__getDOI(item),
+                    url=None,
+                    # self.__getURL(item),
+                    citationCnt=self.__getCitationCount(item)
+                ) )
+
+        return self.results
+    
+    def isearchAndParse(self, willCache=True):
+        self.isearch(willCache)
+        return self.parse()
+    
+    def fsearchAndParse(self):
+        self.fsearch()
+        return self.parse()
+    
+    def searchAndParse(self, willCache=True):
+        self.search(willCache)
+        return self.parse()
+    
+    def __getItem(self, item, tag):
+        tag = item.find(tag, ScopusPageParser.XML_NAMESPACES)
+        return tag.text if tag is not None else None
+
+    def __getArticleID(self, entry):
+        return self.__getItem(entry, 'atom:eid')
+    
+    def __getTitle(self, entry):
+        return self.__getItem(entry, 'dc:title')
+    
+    def __getAuthorNames(self, entry):
+        return self.__getItem(entry, 'dc:creator')
+    
+    def __getPubYear(self, entry):
+        return self.__getItem(entry, 'prism:coverDate')
+    
+    def __getJournal(self, entry):
+        return self.__getItem(entry, 'prism:publicationName')
+    
+    def __getInstitution(self, entry):
+        affList = entry.findall('atom:affiliation', ScopusPageParser.XML_NAMESPACES)
+
+        for aff in affList:
+            affName = aff.find('atom:affilname', ScopusPageParser.XML_NAMESPACES)
+            if affName is not None:
+                return affName.text
+            
+        return None
+    
+    def __getVolume(self, entry):
+        return self.__getItem(entry, 'prism:volume')
+    
+    def __getIssue(self, entry):
+        return self.__getItem(entry, 'prism:issueIdentifier')
+    
+    def __getDOI(self, entry):
+        return self.__getItem(entry, 'prism:doi')
+    
+    def __getCitationCount(self, entry):
+        return self.__getItem(entry, 'atom:citedby-count')
+    
 
 class PageParser:
     KCI = 'KCI'
@@ -556,4 +641,12 @@ if __name__ == '__main__':
     # print('references:', r.refs)
     # print('author institutions:', r.authorInsts)
 
-    ScopusPageParser('deep learning', ScopusPageParser.TITLE_MODE, 0, 40).isearch()
+    results = ScopusPageParser('deep learning', ScopusPageParser.TITLE_MODE, 0, 20).searchAndParse()
+
+    for r in results:
+        print('title({0}), authors({1}), year({2}), journal({3}), institution({4}), volume({5}),    \
+              issue({6}), doi({7}), citation count({8}), articleID({9})'.format(
+            r.title, r.authors, r.year, r.journal, r.institution, r.volume,
+            r.issue, r.doi, r.citationCnt, r.articleID
+        ))
+        print()
