@@ -31,7 +31,16 @@ class KCIPageParser:
     def fsearch(self):
         i = 0
         while True:
-            file_path = papery.CACHE_PREFIX + 'kci/' + self.__searchStr + '.xml' + str(i)
+            if self.__searchMode == self.TITLE_MODE:
+                file_path = papery.CACHE_PREFIX + 'kci/title/' + self.__searchStr + '.xml' + str(i)
+            elif self.__searchMode == self.AUTHOR_MODE:
+                file_path = papery.CACHE_PREFIX + 'kci/author/' + self.__searchStr + '.xml' + str(i)
+            elif self.__searchMode == self.JOURNAL_MODE:
+                file_path = papery.CACHE_PREFIX + 'kci/journal/' + self.__searchStr + '.xml' + str(i)
+            elif self.__searchMode == self.INSTITUTION_MODE:
+                file_path = papery.CACHE_PREFIX + 'kci/institution/' + self.__searchStr + '.xml' + str(i)
+            else:
+                raise ValueError('Invalid search mode')
 
             if os.path.isfile(file_path):
                 self.__pages.append( open(file_path, 'r', encoding='utf-8').read() )
@@ -68,7 +77,17 @@ class KCIPageParser:
             return self.__pages
         
         for i, xml in enumerate(self.__pages):
-            path = papery.CACHE_PREFIX + 'kci/' + self.__searchStr + '.xml' + str(i)
+            if self.__searchMode == self.TITLE_MODE:
+                path = papery.CACHE_PREFIX + 'kci/title/' + self.__searchStr + '.xml' + str(i)
+            elif self.__searchMode == self.AUTHOR_MODE:
+                path = papery.CACHE_PREFIX + 'kci/author/' + self.__searchStr + '.xml' + str(i)
+            elif self.__searchMode == self.JOURNAL_MODE:
+                path = papery.CACHE_PREFIX + 'kci/journal/' + self.__searchStr + '.xml' + str(i)
+            elif self.__searchMode == self.INSTITUTION_MODE:
+                path = papery.CACHE_PREFIX + 'kci/institution/' + self.__searchStr + '.xml' + str(i)
+            else:
+                raise ValueError('Invalid search mode')
+
             with open(path, 'w', encoding='utf-8') as f:
                 f.write(xml)
 
@@ -192,7 +211,16 @@ class ScopusPageParser:
     def fsearch(self):
         i = 0
         while True:
-            file_path = papery.CACHE_PREFIX + 'scopus/' + self.__searchStr + '.xml' + str(i)
+            if self.__searchMode == self.TITLE_MODE:
+                file_path = papery.CACHE_PREFIX + 'scopus/title/' + self.__searchStr + '.xml' + str(i)
+            elif self.__searchMode == self.AUTHOR_MODE:
+                file_path = papery.CACHE_PREFIX + 'scopus/author/' + self.__searchStr + '.xml' + str(i)
+            elif self.__searchMode == self.JOURNAL_MODE:
+                file_path = papery.CACHE_PREFIX + 'scopus/journal/' + self.__searchStr + '.xml' + str(i)
+            elif self.__searchMode == self.INSTITUTION_MODE:
+                file_path = papery.CACHE_PREFIX + 'scopus/institution/' + self.__searchStr + '.xml' + str(i)
+            else:
+                raise ValueError('Invalid search mode')
 
             if os.path.isfile(file_path):
                 self.__pages.append( open(file_path, 'r', encoding='utf-8').read() )
@@ -228,7 +256,17 @@ class ScopusPageParser:
             return self.__pages
         
         for i, xml in enumerate(self.__pages):
-            path = papery.CACHE_PREFIX + 'scopus/' + self.__searchStr + '.xml' + str(i)
+            if self.__searchMode == self.TITLE_MODE:
+                path = papery.CACHE_PREFIX + 'scopus/title/' + self.__searchStr + '.xml' + str(i)
+            elif self.__searchMode == self.AUTHOR_MODE:
+                path = papery.CACHE_PREFIX + 'scopus/author/' + self.__searchStr + '.xml' + str(i)
+            elif self.__searchMode == self.JOURNAL_MODE:
+                path = papery.CACHE_PREFIX + 'scopus/journal/' + self.__searchStr + '.xml' + str(i)
+            elif self.__searchMode == self.INSTITUTION_MODE:
+                path = papery.CACHE_PREFIX + 'scopus/institution/' + self.__searchStr + '.xml' + str(i)
+            else:
+                raise ValueError('Invalid search mode')
+            
             with open(path, 'w', encoding='utf-8') as f:
                 f.write(xml)
 
@@ -361,7 +399,7 @@ class KCIDetailParser:
         if not willCache:
             return self.__detail
         
-        with open(papery.CACHE_PREFIX + 'kci/' + self.__articleID + '.xml', 'w', encoding='utf-8') as f:
+        with open(papery.CACHE_PREFIX + 'kci/detail/' + self.__articleID + '.xml', 'w', encoding='utf-8') as f:
             f.write(self.__detail)
 
         return self.__detail
@@ -370,7 +408,7 @@ class KCIDetailParser:
     # expect the file to be named as #.xml
     # where # is the article ID
     def fsearch(self):
-        file_path = papery.CACHE_PREFIX + 'kci/' + self.__articleID + '.xml'
+        file_path = papery.CACHE_PREFIX + 'kci/detail/' + self.__articleID + '.xml'
 
         if os.path.isfile(file_path):
             self.__detail = open(file_path, 'r', encoding='utf-8').read()
