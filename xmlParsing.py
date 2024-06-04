@@ -523,7 +523,7 @@ class KCIDetailParser:
         if os.path.isfile(file_path):
             self.__detail = open(file_path, 'r', encoding='utf-8').read()
 
-        return self.__detail if self.__detail is not None else None
+        return self.__detail
     
     def search(self, willCache=True):
         fResult = self.fsearch()
@@ -591,6 +591,94 @@ class KCIDetailParser:
             result.append( author.find('institution').text )
         
         return result
+    
+class ScopusDetailParser:
+    XML_NAMESPACES = {
+        'dn': 'http://www.elsevier.com/xml/svapi/abstract/dtd',
+        'ait': 'http://www.elsevier.com/xml/ani/ait',
+        'ce': 'http://www.elsevier.com/xml/ani/common',
+        'cto': 'http://www.elsevier.com/xml/cto/dtd',
+        'dc': 'http://purl.org/dc/elements/1.1/',
+        'prism': 'http://prismstandard.org/namespaces/basic/2.0/',
+        'xocs': 'http://www.elsevier.com/xml/xocs/dtd',
+        'xsi': 'http://www.w3.org/2001/XMLSchema-instance'
+    }
+
+    def __init__(self, articleID):
+        self.__articleID = articleID
+        self.__detail = None
+
+    def isearch(self, willCache=True):
+        params = { 'httpAccept':'text/xml', 'apiKey': papery.SCOPUS_KEY}
+        self.__detail = requests.get(
+            papery.SCOPUS_ABSTRACT_URL + '/' + self.__articleID, params=params
+        ).text
+
+        if not willCache:
+            return self.__detail
+        
+        with open(papery.CACHE_PREFIX + 'scopus/abstract/' + self.__articleID + '.xml', 'w', encoding='utf-8') as f:
+            f.write(self.__detail)
+
+        return self.__detail
+    
+    def fsearch(self):
+        file_path = papery.CACHE_PREFIX + 'scopus/abstract/' + self.__articleID + '.xml'
+
+        if os.path.isfile(file_path):
+            self.__detail = open(file_path, 'r', encoding='utf-8').read()
+
+        return self.__detail
+    
+    def search(self, willCache=True):
+        fResult = self.fsearch()
+        if fResult is not None:
+            return fResult
+        
+        return self.isearch(willCache)
+    
+    def parse(self):
+        refs = []
+        keywords = []
+        authorInsts = []
+        abstract = None
+
+        root = ET.fromstring(self.__detail)
+        coredata = root.find('db:coredata', ScopusDetailParser.XML_NAMESPACES)
+        keywords = self.__getKeywords(coredata)
+        authorInsts = self.__getAuthorInsts(coredata)
+        abstract = self.__getAbstract(coredata)
+        refs = self.__getRefs(root)
+
+        return ScopusDetailParseResult(abstract, keywords, refs, authorInsts)
+    
+    def isearchAndParse(self, willCache=True):
+        self.isearch(willCache)
+        return self.parse()
+    
+    def fsearchAndParse(self):
+        self.fsearch()
+        return self.parse()
+    
+    def searchAndParse(self, willCache=True):
+        self.search(willCache)
+        return self.parse()
+    
+    def __getItem(self, item, tag):
+        tag = item.find(tag, ScopusDetailParser.XML_NAMESPACES)
+        return tag.text if tag is not None else None
+    
+    def __getKeywords(self, item):
+        pass
+    
+    def __getRefs(self, item):
+        pass
+    
+    def __getAuthorInsts(self, item):
+        pass
+    
+    def __getAbstract(self, item):
+        return self.__getItem(item, 'dc:description')
     
 class DetailParser:
     KCI = 'KCI'
@@ -679,12 +767,4 @@ if __name__ == '__main__':
     # print('references:', r.refs)
     # print('author institutions:', r.authorInsts)
 
-    results = ScopusPageParser('deep learning', ScopusPageParser.TITLE_MODE, 0, 20).searchAndParse()
-
-    for r in results:
-        print('title({0}), authors({1}), year({2}), journal({3}), institution({4}), volume({5}),    \
-              issue({6}), doi({7}), citation count({8}), articleID({9})'.format(
-            r.title, r.authors, r.year, r.journal, r.institution, r.volume,
-            r.issue, r.doi, r.citationCnt, r.articleID
-        ))
-        print()
+    r = ScopusDetailParser('2-s2.0-85192867679').isearch()
