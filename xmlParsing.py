@@ -120,7 +120,7 @@ class KCIPageParser:
                 jour = item.find('journalInfo')
                 arti = item.find('articleInfo')
 
-                self.results.append( PageParseResult(
+                self.results.append( KCIPageParseResult(
                     self.__getArticleID(arti),
                     self.__getTitle(arti),
                     self.__getAuthorNames(arti),
@@ -291,20 +291,17 @@ class ScopusPageParser:
             root = ET.fromstring(page)
 
             for item in root.findall('atom:entry', ScopusPageParser.XML_NAMESPACES):
-                self.results.append( PageParseResult(
+                self.results.append( ScopusPageParseResult(
                     articleID=self.__getArticleID(item),
                     title=self.__getTitle(item),
                     authors=self.__getAuthorNames(item),
                     year=self.__getPubYear(item),
-                    abstract=None,
-                    # self.__getAbstract(item),
                     journal=self.__getJournal(item),
                     institution=self.__getInstitution(item),
                     volume=self.__getVolume(item),
                     issue=self.__getIssue(item),
                     doi=self.__getDOI(item),
                     url=None,
-                    # self.__getURL(item),
                     citationCnt=self.__getCitationCount(item)
                 ) )
 
@@ -435,7 +432,7 @@ class PageParser:
             return None
         raise ValueError('Invalid source')
     
-class PageParseResult:
+class KCIPageParseResult:
     def __init__(self, articleID, title, authors,
         year, abstract ,journal, institution,
         volume, issue, doi, url, citationCnt
@@ -464,6 +461,34 @@ class PageParseResult:
         paper.issue = self.issue
         paper.doi = self.doi
         paper.url = self.url
+        paper.citationCnt = self.citationCnt
+        paper.articleID = self.articleID
+
+class ScopusPageParseResult:
+    def __init__(self, articleID, title, authors,
+        year, journal, institution,
+        volume, issue, doi, citationCnt
+    ):
+        self.articleID = articleID
+        self.title = title
+        self.authors = authors
+        self.year = year
+        self.journal = journal
+        self.institution = institution
+        self.volume = volume
+        self.issue = issue
+        self.doi = doi
+        self.citationCnt = citationCnt
+
+    def reflect(self, paper):
+        paper.title = self.title
+        paper.authors = self.authors
+        paper.year = self.year
+        paper.journal = self.journal
+        paper.institution = self.institution
+        paper.volume = self.volume
+        paper.issue = self.issue
+        paper.doi = self.doi
         paper.citationCnt = self.citationCnt
         paper.articleID = self.articleID
 
@@ -521,7 +546,7 @@ class KCIDetailParser:
             keywords.extend( self.__getKeywords(arti) )
             authorInsts.extend( self.__getAuthorInsts(arti) )
 
-        return DetailParseResult(keywords, refs, authorInsts)
+        return KCIDetailParseResult(keywords, refs, authorInsts)
 
     def isearchAndParse(self, willCache=True):
         self.isearch(willCache)
@@ -624,13 +649,26 @@ class DetailParser:
             return None
         raise ValueError('Invalid source')
     
-class DetailParseResult:
+class KCIDetailParseResult:
     def __init__(self, keywords, refs, authorInsts):
         self.keywords = keywords
         self.refs = refs
         self.authorInsts = authorInsts
 
     def reflect(self, paper):
+        paper.keywords = self.keywords
+        paper.refs = self.refs
+        paper.authorInsts = self.authorInsts
+
+class ScopusDetailParseResult:
+    def __init__(self, abstract, keywords, refs, authorInsts):
+        self.abstract = abstract
+        self.keywords = keywords
+        self.refs = refs
+        self.authorInsts = authorInsts
+
+    def reflect(self, paper):
+        paper.abstract = self.abstract
         paper.keywords = self.keywords
         paper.refs = self.refs
         paper.authorInsts = self.authorInsts
