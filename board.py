@@ -26,6 +26,7 @@ class Board:
         self.searchRange(searchStr, searchMode, 0,
             Board.PAGE_CNT_IN_A_SEARCH * Board.RECORD_CNT_IN_A_PAGE - 1
         )
+        self.pageNum = 1
 
     def length(self):
         return len(self.papers)
