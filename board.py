@@ -33,6 +33,8 @@ class Board:
     # [start, end] is an 0-based inclusive range of indices
     # remote page referes to the XML's page
     def searchRange(self, searchStr, searchMode, start, end):
+        if self.searchStr != searchStr or self.searchMode != searchMode:
+            self.papers = []
         self.searchStr = searchStr
         self.searchMode = searchMode
 
