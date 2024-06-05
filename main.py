@@ -8,6 +8,7 @@ from LogTab import *
 from ViewTab import *
 
 from GIFAnimation import *
+from Loading import Loading
 import GuiConfig
 
 class MainGUI:
@@ -45,6 +46,7 @@ class MainGUI:
             x=GuiConfig.WIDTH - GuiConfig.GIF_PADDINGX, y=GuiConfig.GIF_PADDINGY,
             anchor=NE, width=GuiConfig.GIF_WIDTH, height=GuiConfig.GIF_HEIGHT
         )
+        Loading.initGif()
 
         self.defaultbg = self.master.cget('bg')
 

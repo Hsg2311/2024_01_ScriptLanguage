@@ -1,7 +1,12 @@
 from tkinter import *
 from threading import Thread, Semaphore
+from GIFAnimation import *
+import GuiConfig
 
 class Loading:
+    def initGif():
+        Loading.gif = GIFAnimation(364, 248)
+
     def __init__(self, master, task, callback):
         self.master = master
         self.callback = callback
@@ -17,8 +22,29 @@ class Loading:
     def __initWindow(self):
         self.window = Toplevel(self.master)
         self.window.title("Loading")
-        self.label = Label(self.window, text="Loading...")
-        self.label.pack()
+        
+        self.gif = Loading.gif
+        self.gifLabel = Label(self.window, image=self.gif.image())
+        self.gifLabel.pack(padx=20)
+        self.window.after(100, self.update)
+
+        self.txtLoading = StringVar()
+        self.txtLoading.set("Loading")
+        self.txtLabel = Label(self.window, textvariable=self.txtLoading,
+            font=GuiConfig.cFont
+        )
+        self.txtLabel.pack(pady=20)
+        self.txtFrame = 0
+
+    def update(self):
+        self.gif.advance()
+        self.gifLabel.configure(image=self.gif.image())
+
+        self.txtFrame = (self.txtFrame + 1) % 20
+        txtDotCnt = self.txtFrame // 5
+        self.txtLoading.set("Loading" + "." * txtDotCnt)
+
+        self.window.after(100, self.update)
 
     def __runTask(self, task):
         self.result = task()
