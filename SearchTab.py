@@ -4,6 +4,8 @@ from tkinter import messagebox
 from paper import Paper
 from board import Board, Record
 
+from Loading import Loading
+
 import GuiConfig
 
 class SearchTab:
@@ -100,8 +102,15 @@ class SearchTab:
         )
 
     def search(self):
-        self.board.search(self.searchStr.get(), self.searchModeIdx.get())
-        self.update()
+        def task():
+            self.onLoadingPages()
+            self.board.search(self.searchStr.get(), self.searchModeIdx.get())
+
+        def onCompletion(result):
+            self.onLoadedPages()
+            self.update()
+
+        Loading(self.master, task, onCompletion)
 
     def update(self):
         for widgets in self.resultList.winfo_children():
@@ -153,12 +162,21 @@ class SearchTab:
         self.update()
 
     def nextPage(self):
-        if not self.board.nextPage():
-            return
-        
-        if (self.board.pageNum - 1) % Board.PAGE_CNT_IN_A_TRAY == 0:
-            self.trayBasePage += Board.PAGE_CNT_IN_A_TRAY
-        self.update()
+        def task():
+            self.onLoadingPages()
+            return self.board.nextPage()
+
+        def onCompletion(result):
+            self.onLoadedPages()
+
+            if not result:
+                return
+
+            if (self.board.pageNum - 1) % Board.PAGE_CNT_IN_A_TRAY == 0:
+                self.trayBasePage += Board.PAGE_CNT_IN_A_TRAY
+            self.update()
+
+        Loading(self.master, task, onCompletion)
 
     def prevPage(self):
         self.board.prevPage()
@@ -178,3 +196,21 @@ class SearchTab:
                 self.mainGUI.viewTab.setPaper(rec.paper)
 
         self.mainGUI.viewTab.show(self)
+
+    def onLoadingPages(self):
+        # disable all buttons
+        self.searchButton['state'] = 'disabled'
+        self.viewButton['state'] = 'disabled'
+
+        for button in self.pageTrayButtons:
+            if button is not None:
+                button['state'] = 'disabled'
+
+    
+    def onLoadedPages(self):
+        # enable all buttons
+        self.searchButton['state'] = 'normal'
+        self.viewButton['state'] = 'normal'
+        for button in self.pageTrayButtons:
+            if button is not None:
+                button['state'] = 'normal'
