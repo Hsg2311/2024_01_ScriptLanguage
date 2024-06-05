@@ -81,6 +81,9 @@ class Board:
         if self.pageNum < 1:
             self.pageNum = 1
 
+    def curPage(self):
+        return self.pageNum
+
     def get(self, index):
         if not (0 <= index < Board.RECORD_CNT_IN_A_PAGE):
             raise ValueError('index out of range')

@@ -122,7 +122,9 @@ class SearchTab:
 
         self.curRecords = []
 
-        for i in range(min(Board.RECORD_CNT_IN_A_PAGE, self.board.length())):
+        for i in range( min( Board.RECORD_CNT_IN_A_PAGE,
+            self.board.length() - (self.board.curPage() - 1) * Board.RECORD_CNT_IN_A_PAGE
+        ) ):
             self.curRecords.append(
                 Record(self.board.get(i), self.resultList)
             )
