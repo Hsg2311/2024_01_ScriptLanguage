@@ -224,7 +224,7 @@ class CiteDialog:
 
         self.frame = Toplevel(master)
         self.frame.title("인용")
-        self.frame.geometry("300x200")
+        self.frame.geometry("200x60")
 
         # select which format to cite
         # by choosing the format with a radio button
@@ -259,19 +259,16 @@ class CiteDialog:
         self.frame.destroy()
 
     def makeAPACitation(self):
-        # return self.paper.author + ' (' + self.paper.year + '). ' + self.paper.title
         return ', '.join(self.paper.authors) + ' (' + self.paper.year + '). ' + self.paper.title + '. ' \
             + self.paper.journal + ', ' + self.paper.volume + '(' + self.paper.issue + '), '    \
             + self.paper.fPage + '-' + self.paper.lPage + '.'
 
     def makeMLACitation(self):
-        # return self.paper.author + '. "' + self.paper.title + '." (' + self.paper.year + ')'
         return ', '.join(self.paper.authors) + '. "' + self.paper.title + '." ' + self.paper.journal + ' '  \
             + self.paper.volume + '.' + self.paper.issue + ' (' + self.paper.year + '): '   \
             + self.paper.fPage + '-' + self.paper.lPage + '.'
 
     def makeChicagoCitation(self):
-        # return self.paper.author + '. "' + self.paper.title + '." (' + self.paper.year + ')'
         return ', '.join(self.paper.authors) + '. "' + self.paper.title + '." ' + self.paper.journal + ' '  \
             + self.paper.volume + ', no. ' + self.paper.issue + ' (' + self.paper.year + '): '  \
             + self.paper.fPage + '-' + self.paper.lPage + '.'
