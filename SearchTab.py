@@ -153,10 +153,11 @@ class SearchTab:
         self.update()
 
     def nextPage(self):
-        if self.board.pageNum % Board.PAGE_CNT_IN_A_TRAY == 0:
+        if not self.board.nextPage():
+            return
+        
+        if (self.board.pageNum - 1) % Board.PAGE_CNT_IN_A_TRAY == 0:
             self.trayBasePage += Board.PAGE_CNT_IN_A_TRAY
-
-        self.board.nextPage()
         self.update()
 
     def prevPage(self):

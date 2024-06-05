@@ -20,6 +20,7 @@ class Board:
         self.papers = []
         self.pageNum = 1
         self.searchStr = ''
+        self.searchMode = Board.SEARCH_MODE_TITLE
 
     def search(self, searchStr, searchMode=SEARCH_MODE_TITLE):
         self.searchRange(searchStr, searchMode, 0,
@@ -33,6 +34,7 @@ class Board:
     # remote page referes to the XML's page
     def searchRange(self, searchStr, searchMode, start, end):
         self.searchStr = searchStr
+        self.searchMode = searchMode
 
         remotePageStart = start // Board.SEARCH_UNIT + 1
         remotePageEnd = end // Board.SEARCH_UNIT + 1
@@ -61,15 +63,16 @@ class Board:
 
     def nextPage(self):
         if self.pageNum % Board.PAGE_CNT_IN_A_SEARCH == 0:
-            self.searchRange(self.searchStr, self.pageNum * Board.RECORD_CNT_IN_A_PAGE,
+            self.searchRange(self.searchStr, self.searchMode, self.pageNum * Board.RECORD_CNT_IN_A_PAGE,
                 (self.pageNum + Board.PAGE_CNT_IN_A_SEARCH) * Board.RECORD_CNT_IN_A_PAGE - 1
             )
 
         if self.length() <= self.pageNum * Board.RECORD_CNT_IN_A_PAGE:
             messagebox.showinfo('알림', '마지막 페이지입니다.')
-            return
+            return False
 
         self.pageNum += 1
+        return True
 
     def prevPage(self):
         self.pageNum -= 1
