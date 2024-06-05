@@ -29,7 +29,7 @@ class KCIPageParser:
     # expect the file to be named as @.xml#
     # where @ is the search string and # is the page number
     def fsearch(self):
-        i = 0
+        i = self.__basePage
         while True:
             if self.__searchMode == self.TITLE_MODE:
                 file_path = papery.CACHE_PREFIX + 'kci/title/' + self.__searchStr + '.xml' + str(i)
@@ -78,13 +78,13 @@ class KCIPageParser:
         
         for i, xml in enumerate(self.__pages):
             if self.__searchMode == self.TITLE_MODE:
-                path = papery.CACHE_PREFIX + 'kci/title/' + self.__searchStr + '.xml' + str(i)
+                path = papery.CACHE_PREFIX + 'kci/title/' + self.__searchStr + '.xml' + str(i + self.__basePage)
             elif self.__searchMode == self.AUTHOR_MODE:
-                path = papery.CACHE_PREFIX + 'kci/author/' + self.__searchStr + '.xml' + str(i)
+                path = papery.CACHE_PREFIX + 'kci/author/' + self.__searchStr + '.xml' + str(i + self.__basePage)
             elif self.__searchMode == self.JOURNAL_MODE:
-                path = papery.CACHE_PREFIX + 'kci/journal/' + self.__searchStr + '.xml' + str(i)
+                path = papery.CACHE_PREFIX + 'kci/journal/' + self.__searchStr + '.xml' + str(i + self.__basePage)
             elif self.__searchMode == self.INSTITUTION_MODE:
-                path = papery.CACHE_PREFIX + 'kci/institution/' + self.__searchStr + '.xml' + str(i)
+                path = papery.CACHE_PREFIX + 'kci/institution/' + self.__searchStr + '.xml' + str(i + self.__basePage)
             else:
                 raise ValueError('Invalid search mode')
 
@@ -216,7 +216,7 @@ class ScopusPageParser:
     # expect the file to be named as @.xml#
     # where @ is the search string and # is the page number
     def fsearch(self):
-        i = 0
+        i = self.__basePage
         while True:
             if self.__searchMode == self.TITLE_MODE:
                 file_path = papery.CACHE_PREFIX + 'scopus/title/' + self.__searchStr + '.xml' + str(i)
@@ -264,13 +264,13 @@ class ScopusPageParser:
         
         for i, xml in enumerate(self.__pages):
             if self.__searchMode == self.TITLE_MODE:
-                path = papery.CACHE_PREFIX + 'scopus/title/' + self.__searchStr + '.xml' + str(i)
+                path = papery.CACHE_PREFIX + 'scopus/title/' + self.__searchStr + '.xml' + str(i + self.__basePage)
             elif self.__searchMode == self.AUTHOR_MODE:
-                path = papery.CACHE_PREFIX + 'scopus/author/' + self.__searchStr + '.xml' + str(i)
+                path = papery.CACHE_PREFIX + 'scopus/author/' + self.__searchStr + '.xml' + str(i + self.__basePage)
             elif self.__searchMode == self.JOURNAL_MODE:
-                path = papery.CACHE_PREFIX + 'scopus/journal/' + self.__searchStr + '.xml' + str(i)
+                path = papery.CACHE_PREFIX + 'scopus/journal/' + self.__searchStr + '.xml' + str(i + self.__basePage)
             elif self.__searchMode == self.INSTITUTION_MODE:
-                path = papery.CACHE_PREFIX + 'scopus/institution/' + self.__searchStr + '.xml' + str(i)
+                path = papery.CACHE_PREFIX + 'scopus/institution/' + self.__searchStr + '.xml' + str(i + self.__basePage)
             else:
                 raise ValueError('Invalid search mode')
             
