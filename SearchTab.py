@@ -21,8 +21,8 @@ class SearchTab:
 
     def initWidgets(self):
         self.searchBar = Frame(self.frame)
-        self.searchBar.place( x=GuiConfig.TABS_PADDINGX, y=GuiConfig.SEARCH_BAR_PADDING_Y,
-            width=GuiConfig.SEARCH_ENTRY_WIDTH + GuiConfig.SEARCH_BUTTON_WIDTH + GuiConfig.WIDGET_INTERVALX,
+        self.searchBar.place( x=GuiConfig.TABS_PADDINGX * 2, y=GuiConfig.SEARCH_BAR_PADDING_Y,
+            width=GuiConfig.SEARCH_ENTRY_WIDTH + GuiConfig.SEARCH_BUTTON_WIDTH + GuiConfig.WIDGET_INTERVALX * 2 + GuiConfig.SEARCH_MODE_TRAY_WIDTH,
             height=max(GuiConfig.SEARCH_ENTRY_HEIGHT, GuiConfig.SEARCH_BUTTON_HEIGHT) + GuiConfig.WIDGET_INTERVALY,
             anchor=NW
         )
@@ -30,16 +30,43 @@ class SearchTab:
         self.searchStr = StringVar()
         self.searchStr.set("검색어를 입력하세요")
         self.entry = Entry(self.searchBar, textvariable=self.searchStr, font=GuiConfig.cFont)
-        self.entry.place( x=GuiConfig.TABS_PADDINGX, y=0,
-            width=GuiConfig.SEARCH_ENTRY_WIDTH, height=GuiConfig.SEARCH_ENTRY_HEIGHT,
-            anchor=NW
+        self.entry.place( x=0, y=0, width=GuiConfig.SEARCH_ENTRY_WIDTH,
+            height=GuiConfig.SEARCH_ENTRY_HEIGHT, anchor=NW
         )
 
-        self.button = Button(self.searchBar, text="검색", font=GuiConfig.cFont, command=self.search)
-        self.button.place( x=GuiConfig.SEARCH_ENTRY_WIDTH + GuiConfig.WIDGET_INTERVALX,
+        self.searchButton = Button(self.searchBar, text="검색", font=GuiConfig.cFont, command=self.search)
+        self.searchButton.place( x=GuiConfig.SEARCH_ENTRY_WIDTH + GuiConfig.WIDGET_INTERVALX * 2 + GuiConfig.SEARCH_MODE_TRAY_WIDTH,
             y=0, width=GuiConfig.SEARCH_BUTTON_WIDTH, height=GuiConfig.SEARCH_BUTTON_HEIGHT,
             anchor=NW
         )
+
+        self.searchModeTray = Frame(self.searchBar)
+        self.searchModeTray.place( x=GuiConfig.SEARCH_ENTRY_WIDTH + GuiConfig.WIDGET_INTERVALX,
+            y=0, width=GuiConfig.SEARCH_MODE_TRAY_WIDTH, height=GuiConfig.SEARCH_ENTRY_HEIGHT,
+            anchor=NW
+        )
+
+        self.searchModeIdx = IntVar()
+
+        self.smTitle = Radiobutton(self.searchModeTray, text="제목", font=GuiConfig.searchModeFont,
+            variable=self.searchModeIdx, value=Board.SEARCH_MODE_TITLE
+        )
+        self.smTitle.pack(side=LEFT)
+
+        self.smAuthor = Radiobutton(self.searchModeTray, text="저자", font=GuiConfig.searchModeFont,
+            variable=self.searchModeIdx, value=Board.SEARCH_MODE_AUTHOR
+        )
+        self.smAuthor.pack(side=LEFT)
+
+        self.smJournal = Radiobutton(self.searchModeTray, text="학술지", font=GuiConfig.searchModeFont,
+            variable=self.searchModeIdx, value=Board.SEARCH_MODE_JOURNAL
+        )
+        self.smJournal.pack(side=LEFT)
+
+        self.smInstitution = Radiobutton(self.searchModeTray, text="기관", font=GuiConfig.searchModeFont,
+            variable=self.searchModeIdx, value=Board.SEARCH_MODE_INSTITUTION
+        )
+        self.smInstitution.pack(side=LEFT)
 
         self.result = Frame(self.frame, height=GuiConfig.SEARCH_RESULT_HEIGHT)
         self.result.place( x=GuiConfig.TABS_PADDINGX,
@@ -58,7 +85,7 @@ class SearchTab:
 
         self.pageTray = Frame(self.result)
         self.pageTray.place( x=(GuiConfig.SEARCH_RESULT_WIDTH - GuiConfig.SEARCH_RESULT_TRAY_WIDTH) // 2,
-            y=GuiConfig.SEARCH_RESULT_HEIGHT + GuiConfig.WIDGET_INTERVALY,
+            y=GuiConfig.SEARCH_RESULT_HEIGHT + GuiConfig.SEARCH_RESULT_TRAY_PADDINGY,
             width=GuiConfig.SEARCH_RESULT_TRAY_WIDTH,
             height=GuiConfig.SEARCH_RESULT_TRAY_HEIGHT,
             anchor=NW
@@ -73,11 +100,7 @@ class SearchTab:
         )
 
     def search(self):
-        self.board.search(self.searchStr.get())
-
-        # temporary implementation
-        # self.board.loadCache(self.searchStr.get())
-
+        self.board.search(self.searchStr.get(), self.searchModeIdx.get())
         self.update()
 
     def update(self):
