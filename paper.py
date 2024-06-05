@@ -1,8 +1,9 @@
 class Paper:
     def __init__( self, title = None, authors = None, year = None,
         authorInsts = None, journal = None, volume = None, issue = None,
-        doi = None, url = None, abstract = None, citationCnt = None,
-        keywords = None, refs = None, institution = None, articleID = None
+        fPage = None, lPage = None, doi = None, url = None, abstract = None,
+        citationCnt = None, keywords = None, refs = None, institution = None,
+        articleID = None
     ):
         self.title = title
         self.authors = authors
@@ -11,6 +12,8 @@ class Paper:
         self.journal = journal
         self.volume = volume
         self.issue = issue
+        self.fPage = fPage
+        self.lPage = lPage
         self.doi = doi
         self.url = url
         self.abstract = abstract

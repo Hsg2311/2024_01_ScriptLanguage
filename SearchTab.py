@@ -4,6 +4,8 @@ from tkinter import messagebox
 from paper import Paper
 from board import Board, Record
 
+from Loading import Loading
+
 import GuiConfig
 
 class SearchTab:
@@ -21,8 +23,8 @@ class SearchTab:
 
     def initWidgets(self):
         self.searchBar = Frame(self.frame)
-        self.searchBar.place( x=GuiConfig.TABS_PADDINGX, y=GuiConfig.SEARCH_BAR_PADDING_Y,
-            width=GuiConfig.SEARCH_ENTRY_WIDTH + GuiConfig.SEARCH_BUTTON_WIDTH + GuiConfig.WIDGET_INTERVALX,
+        self.searchBar.place( x=GuiConfig.TABS_PADDINGX * 2, y=GuiConfig.SEARCH_BAR_PADDING_Y,
+            width=GuiConfig.SEARCH_ENTRY_WIDTH + GuiConfig.SEARCH_BUTTON_WIDTH + GuiConfig.WIDGET_INTERVALX * 2 + GuiConfig.SEARCH_MODE_TRAY_WIDTH,
             height=max(GuiConfig.SEARCH_ENTRY_HEIGHT, GuiConfig.SEARCH_BUTTON_HEIGHT) + GuiConfig.WIDGET_INTERVALY,
             anchor=NW
         )
@@ -30,16 +32,43 @@ class SearchTab:
         self.searchStr = StringVar()
         self.searchStr.set("검색어를 입력하세요")
         self.entry = Entry(self.searchBar, textvariable=self.searchStr, font=GuiConfig.cFont)
-        self.entry.place( x=GuiConfig.TABS_PADDINGX, y=0,
-            width=GuiConfig.SEARCH_ENTRY_WIDTH, height=GuiConfig.SEARCH_ENTRY_HEIGHT,
-            anchor=NW
+        self.entry.place( x=0, y=0, width=GuiConfig.SEARCH_ENTRY_WIDTH,
+            height=GuiConfig.SEARCH_ENTRY_HEIGHT, anchor=NW
         )
 
-        self.button = Button(self.searchBar, text="검색", font=GuiConfig.cFont, command=self.search)
-        self.button.place( x=GuiConfig.SEARCH_ENTRY_WIDTH + GuiConfig.WIDGET_INTERVALX,
+        self.searchButton = Button(self.searchBar, text="검색", font=GuiConfig.cFont, command=self.search)
+        self.searchButton.place( x=GuiConfig.SEARCH_ENTRY_WIDTH + GuiConfig.WIDGET_INTERVALX * 2 + GuiConfig.SEARCH_MODE_TRAY_WIDTH,
             y=0, width=GuiConfig.SEARCH_BUTTON_WIDTH, height=GuiConfig.SEARCH_BUTTON_HEIGHT,
             anchor=NW
         )
+
+        self.searchModeTray = Frame(self.searchBar)
+        self.searchModeTray.place( x=GuiConfig.SEARCH_ENTRY_WIDTH + GuiConfig.WIDGET_INTERVALX,
+            y=0, width=GuiConfig.SEARCH_MODE_TRAY_WIDTH, height=GuiConfig.SEARCH_ENTRY_HEIGHT,
+            anchor=NW
+        )
+
+        self.searchModeIdx = IntVar()
+
+        self.smTitle = Radiobutton(self.searchModeTray, text="제목", font=GuiConfig.searchModeFont,
+            variable=self.searchModeIdx, value=Board.SEARCH_MODE_TITLE
+        )
+        self.smTitle.pack(side=LEFT)
+
+        self.smAuthor = Radiobutton(self.searchModeTray, text="저자", font=GuiConfig.searchModeFont,
+            variable=self.searchModeIdx, value=Board.SEARCH_MODE_AUTHOR
+        )
+        self.smAuthor.pack(side=LEFT)
+
+        self.smJournal = Radiobutton(self.searchModeTray, text="학술지", font=GuiConfig.searchModeFont,
+            variable=self.searchModeIdx, value=Board.SEARCH_MODE_JOURNAL
+        )
+        self.smJournal.pack(side=LEFT)
+
+        self.smInstitution = Radiobutton(self.searchModeTray, text="기관", font=GuiConfig.searchModeFont,
+            variable=self.searchModeIdx, value=Board.SEARCH_MODE_INSTITUTION
+        )
+        self.smInstitution.pack(side=LEFT)
 
         self.result = Frame(self.frame, height=GuiConfig.SEARCH_RESULT_HEIGHT)
         self.result.place( x=GuiConfig.TABS_PADDINGX,
@@ -58,7 +87,7 @@ class SearchTab:
 
         self.pageTray = Frame(self.result)
         self.pageTray.place( x=(GuiConfig.SEARCH_RESULT_WIDTH - GuiConfig.SEARCH_RESULT_TRAY_WIDTH) // 2,
-            y=GuiConfig.SEARCH_RESULT_HEIGHT + GuiConfig.WIDGET_INTERVALY,
+            y=GuiConfig.SEARCH_RESULT_HEIGHT + GuiConfig.SEARCH_RESULT_TRAY_PADDINGY,
             width=GuiConfig.SEARCH_RESULT_TRAY_WIDTH,
             height=GuiConfig.SEARCH_RESULT_TRAY_HEIGHT,
             anchor=NW
@@ -73,12 +102,16 @@ class SearchTab:
         )
 
     def search(self):
-        self.board.search(self.searchStr.get())
+        def task():
+            self.onLoadingPages()
+            self.board.search(self.searchStr.get(), self.searchModeIdx.get())
+            self.trayBasePage = 1
 
-        # temporary implementation
-        # self.board.loadCache(self.searchStr.get())
+        def onCompletion(result):
+            self.onLoadedPages()
+            self.update()
 
-        self.update()
+        Loading(self.master, task, onCompletion)
 
     def update(self):
         for widgets in self.resultList.winfo_children():
@@ -89,7 +122,9 @@ class SearchTab:
 
         self.curRecords = []
 
-        for i in range(min(Board.RECORD_CNT_IN_A_PAGE, self.board.length())):
+        for i in range( min( Board.RECORD_CNT_IN_A_PAGE,
+            self.board.length() - (self.board.curPage() - 1) * Board.RECORD_CNT_IN_A_PAGE
+        ) ):
             self.curRecords.append(
                 Record(self.board.get(i), self.resultList)
             )
@@ -97,7 +132,7 @@ class SearchTab:
             self.resultList.grid_rowconfigure(i, weight=1)
         self.resultList.grid_columnconfigure(0, weight=1)
 
-        trayLen = min( self.board.length() // Board.RECORD_CNT_IN_A_PAGE,
+        trayLen = min( self.board.length() // Board.RECORD_CNT_IN_A_PAGE + 1,
             Board.PAGE_CNT_IN_A_TRAY
         )
 
@@ -115,6 +150,9 @@ class SearchTab:
             self.pageTray.grid_columnconfigure(i+1, weight=1)
         self.pageTray.grid_rowconfigure(0, weight=1)
 
+        for i in range(trayLen, Board.PAGE_CNT_IN_A_TRAY):
+            self.pageTrayButtons[i] = None
+
         Button( self.pageTray, text=">", font=GuiConfig.cFont,
             command=self.nextPage
         ).grid(row=0, column=trayLen+1)
@@ -130,11 +168,21 @@ class SearchTab:
         self.update()
 
     def nextPage(self):
-        if self.board.pageNum % Board.PAGE_CNT_IN_A_TRAY == 0:
-            self.trayBasePage += Board.PAGE_CNT_IN_A_TRAY
+        def task():
+            self.onLoadingPages()
+            return self.board.nextPage()
 
-        self.board.nextPage()
-        self.update()
+        def onCompletion(result):
+            self.onLoadedPages()
+
+            if not result:
+                return
+
+            if (self.board.pageNum - 1) % Board.PAGE_CNT_IN_A_TRAY == 0:
+                self.trayBasePage += Board.PAGE_CNT_IN_A_TRAY
+            self.update()
+
+        Loading(self.master, task, onCompletion)
 
     def prevPage(self):
         self.board.prevPage()
@@ -154,3 +202,21 @@ class SearchTab:
                 self.mainGUI.viewTab.setPaper(rec.paper)
 
         self.mainGUI.viewTab.show(self)
+
+    def onLoadingPages(self):
+        # disable all buttons
+        self.searchButton['state'] = 'disabled'
+        self.viewButton['state'] = 'disabled'
+
+        for button in self.pageTrayButtons:
+            if button is not None:
+                button['state'] = 'disabled'
+
+    
+    def onLoadedPages(self):
+        # enable all buttons
+        self.searchButton['state'] = 'normal'
+        self.viewButton['state'] = 'normal'
+        for button in self.pageTrayButtons:
+            if button is not None:
+                button['state'] = 'normal'
