@@ -3,6 +3,7 @@ from xmlParsing import PageParser
 import papery
 
 from tkinter import *
+from tkinter import messagebox
 import GuiConfig
 
 class Board:
@@ -51,8 +52,6 @@ class Board:
             Board.SEARCH_UNIT * (remotePageEnd - remotePageStart + 1)
         ).searchAndParse()
 
-        self.papers = []
-
         for parseResult in parseResults:
             self.papers.append( Paper() )
             parseResult.reflect(self.papers[-1])
@@ -66,6 +65,10 @@ class Board:
                 (self.pageNum + Board.PAGE_CNT_IN_A_SEARCH) * Board.RECORD_CNT_IN_A_PAGE - 1
             )
 
+        if self.length() <= self.pageNum * Board.RECORD_CNT_IN_A_PAGE:
+            messagebox.showinfo('알림', '마지막 페이지입니다.')
+            return
+
         self.pageNum += 1
 
     def prevPage(self):
@@ -73,16 +76,11 @@ class Board:
         if self.pageNum < 1:
             self.pageNum = 1
 
-        if self.pageNum % Board.PAGE_CNT_IN_A_SEARCH == 0:
-            self.searchRange(self.searchStr, (self.pageNum - Board.PAGE_CNT_IN_A_SEARCH) * Board.RECORD_CNT_IN_A_PAGE,
-                self.pageNum * Board.RECORD_CNT_IN_A_PAGE - 1
-            )
-
     def get(self, index):
         if not (0 <= index < Board.RECORD_CNT_IN_A_PAGE):
             raise ValueError('index out of range')
 
-        return self.papers[ ((self.pageNum-1) % Board.PAGE_CNT_IN_A_SEARCH) * Board.RECORD_CNT_IN_A_PAGE + index ]
+        return self.papers[ (self.pageNum-1) * Board.RECORD_CNT_IN_A_PAGE + index ]
 
 class Record:
     def __init__(self, paper, master):
