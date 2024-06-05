@@ -105,6 +105,7 @@ class SearchTab:
         def task():
             self.onLoadingPages()
             self.board.search(self.searchStr.get(), self.searchModeIdx.get())
+            self.trayBasePage = 1
 
         def onCompletion(result):
             self.onLoadedPages()
@@ -146,6 +147,9 @@ class SearchTab:
             self.pageTrayButtons[i].grid(row=0, column=i+1)
             self.pageTray.grid_columnconfigure(i+1, weight=1)
         self.pageTray.grid_rowconfigure(0, weight=1)
+
+        for i in range(trayLen, Board.PAGE_CNT_IN_A_TRAY):
+            self.pageTrayButtons[i] = None
 
         Button( self.pageTray, text=">", font=GuiConfig.cFont,
             command=self.nextPage
