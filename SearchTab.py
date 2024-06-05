@@ -97,7 +97,7 @@ class SearchTab:
             self.resultList.grid_rowconfigure(i, weight=1)
         self.resultList.grid_columnconfigure(0, weight=1)
 
-        trayLen = min( self.board.length() // Board.RECORD_CNT_IN_A_PAGE,
+        trayLen = min( self.board.length() // Board.RECORD_CNT_IN_A_PAGE + 1,
             Board.PAGE_CNT_IN_A_TRAY
         )
 
