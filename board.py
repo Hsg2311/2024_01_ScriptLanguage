@@ -23,6 +23,7 @@ class Board:
         self.searchMode = Board.SEARCH_MODE_TITLE
 
     def search(self, searchStr, searchMode=SEARCH_MODE_TITLE):
+        self.papers = []
         self.searchRange(searchStr, searchMode, 0,
             Board.PAGE_CNT_IN_A_SEARCH * Board.RECORD_CNT_IN_A_PAGE - 1
         )
@@ -34,8 +35,6 @@ class Board:
     # [start, end] is an 0-based inclusive range of indices
     # remote page referes to the XML's page
     def searchRange(self, searchStr, searchMode, start, end):
-        if self.searchStr != searchStr or self.searchMode != searchMode:
-            self.papers = []
         self.searchStr = searchStr
         self.searchMode = searchMode
 
