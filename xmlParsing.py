@@ -121,18 +121,20 @@ class KCIPageParser:
                 arti = item.find('articleInfo')
 
                 self.results.append( KCIPageParseResult(
-                    self.__getArticleID(arti),
-                    self.__getTitle(arti),
-                    self.__getAuthorNames(arti),
-                    self.__getPubYear(jour),
-                    self.__getAbstract(arti),
-                    self.__getJournal(jour),
-                    self.__getInstitution(jour),
-                    self.__getVolume(jour),
-                    self.__getIssue(jour),
-                    self.__getDOI(arti),
-                    self.__getURL(arti),
-                    self.__getCitationCount(arti)
+                    articleID=self.__getArticleID(arti),
+                    title=self.__getTitle(arti),
+                    authors=self.__getAuthorNames(arti),
+                    year=self.__getPubYear(jour),
+                    abstract=self.__getAbstract(arti),
+                    journal=self.__getJournal(jour),
+                    institution=self.__getInstitution(jour),
+                    volume=self.__getVolume(jour),
+                    issue=self.__getIssue(jour),
+                    fPage=self.__getFPage(arti),
+                    lPage=self.__getLPage(arti),
+                    doi=self.__getDOI(arti),
+                    url=self.__getURL(arti),
+                    citationCnt=self.__getCitationCount(arti)
                 ) )
 
         return self.results
@@ -187,6 +189,12 @@ class KCIPageParser:
     
     def __getInstitution(self, item):
         return self.__getItem(item, 'publisher-name')
+    
+    def __getFPage(self, item):
+        return self.__getItem(item, 'fpage')
+    
+    def __getLPage(self, item):
+        return self.__getItem(item, 'lpage')
     
 class ScopusPageParser:
     TITLE_MODE = 0
@@ -300,8 +308,9 @@ class ScopusPageParser:
                     institution=self.__getInstitution(item),
                     volume=self.__getVolume(item),
                     issue=self.__getIssue(item),
+                    fPage=self.__getFPage(item),
+                    lPage=self.__getLPage(item),
                     doi=self.__getDOI(item),
-                    url=None,
                     citationCnt=self.__getCitationCount(item)
                 ) )
 
@@ -359,6 +368,20 @@ class ScopusPageParser:
     
     def __getCitationCount(self, entry):
         return self.__getItem(entry, 'atom:citedby-count')
+    
+    def __getFPage(self, entry):
+        pr = self.__getItem(entry, 'prism:pageRange')
+        if pr is not None:
+            return pr.split('-')[0]
+        
+        return None
+    
+    def __getLPage(self, entry):
+        pr = self.__getItem(entry, 'prism:pageRange')
+        if pr is not None:
+            return pr.split('-')[1]
+        
+        return None
     
 
 class PageParser:
@@ -435,7 +458,8 @@ class PageParser:
 class KCIPageParseResult:
     def __init__(self, articleID, title, authors,
         year, abstract ,journal, institution,
-        volume, issue, doi, url, citationCnt
+        volume, issue, fPage, lPage, doi, url,
+        citationCnt
     ):
         self.articleID = articleID
         self.title = title
@@ -449,6 +473,8 @@ class KCIPageParseResult:
         self.doi = doi
         self.url = url
         self.citationCnt = citationCnt
+        self.fPage = fPage
+        self.lPage = lPage
 
     def reflect(self, paper):
         paper.title = self.title
@@ -459,6 +485,8 @@ class KCIPageParseResult:
         paper.institution = self.institution
         paper.volume = self.volume
         paper.issue = self.issue
+        paper.fPage = self.fPage
+        paper.lPage = self.lPage
         paper.doi = self.doi
         paper.url = self.url
         paper.citationCnt = self.citationCnt
@@ -466,8 +494,8 @@ class KCIPageParseResult:
 
 class ScopusPageParseResult:
     def __init__(self, articleID, title, authors,
-        year, journal, institution,
-        volume, issue, doi, citationCnt
+        year, journal, institution, volume, issue,
+        fPage, lPage, doi, citationCnt
     ):
         self.articleID = articleID
         self.title = title
@@ -477,6 +505,8 @@ class ScopusPageParseResult:
         self.institution = institution
         self.volume = volume
         self.issue = issue
+        self.fPage = fPage
+        self.lPage = lPage
         self.doi = doi
         self.citationCnt = citationCnt
 
@@ -488,6 +518,8 @@ class ScopusPageParseResult:
         paper.institution = self.institution
         paper.volume = self.volume
         paper.issue = self.issue
+        paper.fPage = self.fPage
+        paper.lPage = self.lPage
         paper.doi = self.doi
         paper.citationCnt = self.citationCnt
         paper.articleID = self.articleID
@@ -767,4 +799,4 @@ if __name__ == '__main__':
     # print('references:', r.refs)
     # print('author institutions:', r.authorInsts)
 
-    r = ScopusDetailParser('2-s2.0-85192867679').isearch()
+    r = ScopusPageParser('deep learning', ScopusPageParser.TITLE_MODE, 1, 60).searchAndParse()
