@@ -96,13 +96,13 @@ class SearchTab:
                 new_window_frame = Frame(new_window, bg='white')
                 new_window_frame.pack(expand=True, fill='both')
 
-                global root
-
                 style = ttk.Style()
                 style.configure('Treeview', font=('Helvetica', 14), rowheight=30)
 
                 self.tree = ttk.Treeview(new_window_frame)
                 self.tree.place(x=0, y=0, width=200, height=300)
+
+                self.updateTreeview(root)
 
                 addButton = Button(new_window_frame, text='+', command=self.addCategory)
                 addButton.place(x=205, y=0, width=40, height=40)
@@ -112,11 +112,6 @@ class SearchTab:
                 ncButton.place(x=205, y=100, width=40, height=40)
 
                 expandAllItems(self.tree)
-
-    def addBookmarkTab(self, bmTab):
-        # self.bmTab = BookmarkTab(self.new_window)
-        # self.syncBmTab = bmTab
-        pass
 
     def search(self):
         # self.board.search(self.searchStr.get())
@@ -199,7 +194,60 @@ class SearchTab:
         self.mainGUI.viewTab.show(self)
 
     def insertNode(self, node, parent = None):
+        global root
         if isinstance(node, bookmark.Category):
+            if isinstance(parent, bookmark.Category):
+                self.tree.insert(parent.name, "end", text=node.name, iid=node.name)
+                print('shut')
+                parent.insert(bookmark.Category(node.name))
+            elif isinstance(parent, bookmark.BookmarkItem):
+                print('the')
+                self.tree.insert(parent.paper, "end", text=node.name, iid=node.name)
+                parent.insert(bookmark.Category(node.name))
+            else:
+                print('fuck')
+                self.tree.insert("", "end", text=node.name, iid=node.name)
+                root.insert(bookmark.Category(node.name))
+        else:
+            if isinstance(parent, bookmark.Category):
+                print('up')
+                self.tree.insert(parent.name, "end", text=node.paper, iid=node.paper)
+            elif isinstance(parent, bookmark.BookmarkItem):
+                print('little')
+                self.tree.insert(parent.paper, "end", text=node.paper, iid=node.paper)
+            else:
+                print('pussy')
+                self.tree.insert("", "end", text=node.paper, iid=node.paper)
+
+        for child in node.children:
+            self.insertNode(child, node)
+
+    def addCategory(self):
+        global root
+        name = simpledialog.askstring("카테고리 이름 설정", "카테고리 이름을 입력하세요:")
+        c = bookmark.Category(name)
+        self.insertNode(c, root)
+
+    def delCategory(self):
+        global root
+
+        selected_item = self.tree.selection()
+        if selected_item:
+            self.tree.delete(selected_item)
+            root.delete(selected_item)
+
+    def changeItemName(self):
+        selected_items = self.tree.selection()
+        if selected_items:  # 선택된 아이템이 있는지 확인
+            new_name = simpledialog.askstring("카테고리 이름 변경", "새 이름을 입력하세요:")
+            if new_name:  # 사용자가 이름을 입력하고 'OK'를 누른 경우
+                for item in selected_items:
+                    self.tree.item(item, text=new_name)  # 선택된 아이템의 이름을 새로운 이름으로 변경
+
+    def updateTreeview(self, node, parent = None):
+        if isinstance(node, bookmark.Root):
+            pass
+        elif isinstance(node, bookmark.Category):
             if isinstance(parent, bookmark.Category):
                 self.tree.insert(parent.name, "end", text=node.name, iid=node.name)
             elif isinstance(parent, bookmark.BookmarkItem):
@@ -215,27 +263,7 @@ class SearchTab:
                 self.tree.insert("", "end", text=node.paper, iid=node.paper)
 
         for child in node.children:
-            self.insertNode(child, node)
-
-    def addCategory(self):
-        name = simpledialog.askstring("카테고리 이름 설정", "카테고리 이름을 입력하세요:")
-        c = bookmark.Category(name)
-        self.insertNode(c)
-        global root
-        root.insert(c)
-
-    def delCategory(self):
-        selected_item = self.tree.selection()
-        if selected_item:
-            self.tree.delete(selected_item)
-
-    def changeItemName(self):
-        selected_items = self.tree.selection()
-        if selected_items:  # 선택된 아이템이 있는지 확인
-            new_name = simpledialog.askstring("카테고리 이름 변경", "새 이름을 입력하세요:")
-            if new_name:  # 사용자가 이름을 입력하고 'OK'를 누른 경우
-                for item in selected_items:
-                    self.tree.item(item, text=new_name)  # 선택된 아이템의 이름을 새로운 이름으로 변경
+            self.updateTreeview(child, node)
 
 def expandAllItems(tree, item=''):
     for child in tree.get_children(item):

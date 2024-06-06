@@ -5,6 +5,7 @@ from tkinter import ttk
 from tkinter import simpledialog
 
 import bookmark
+
 from BookmarkRoot import root
 
 class BookmarkTab:
@@ -34,11 +35,74 @@ class BookmarkTab:
 
     def insertNode(self, node, parent = None):
         global root
-
         if isinstance(node, bookmark.Category):
             if isinstance(parent, bookmark.Category):
                 self.tree.insert(parent.name, "end", text=node.name, iid=node.name)
-                root.insert(bookmark.Category('name'), node.name)
+                print('shut')
+                parent.insert(bookmark.Category(node.name))
+            elif isinstance(parent, bookmark.BookmarkItem):
+                print('the')
+                self.tree.insert(parent.paper, "end", text=node.name, iid=node.name)
+                parent.insert(bookmark.Category(node.name))
+            else:
+                print('fuck')
+                self.tree.insert("", "end", text=node.name, iid=node.name)
+                root.insert(bookmark.Category(node.name))
+        else:
+            if isinstance(parent, bookmark.Category):
+                print('up')
+                self.tree.insert(parent.name, "end", text=node.paper, iid=node.paper)
+            elif isinstance(parent, bookmark.BookmarkItem):
+                print('little')
+                self.tree.insert(parent.paper, "end", text=node.paper, iid=node.paper)
+            else:
+                print('pussy')
+                self.tree.insert("", "end", text=node.paper, iid=node.paper)
+
+        for child in node.children:
+            self.insertNode(child, node)
+
+    def findCategory(self, node, name):
+        for child in node.children:
+            if isinstance(child, bookmark.Category) and child.owns(name):
+                return child
+        for child in node.children:
+            tmp = self.findCategory(child, name)
+            if tmp is not None:
+                return tmp
+            
+        return None
+
+    def addCategory(self):
+        global root
+        name = simpledialog.askstring("카테고리 이름 설정", "카테고리 이름을 입력하세요:")
+        c = bookmark.Category(name)
+        self.insertNode(c, root)
+
+    def delCategory(self):
+        global root
+
+        selected_item = self.tree.selection()
+        print(selected_item)
+        if selected_item:
+            self.findCategory(root, selected_item[0]).destroy()
+            self.tree.delete(selected_item)
+            
+
+    def changeItemName(self):
+        selected_item = self.tree.selection()
+        if selected_item:  # 선택된 아이템이 있는지 확인
+            new_name = simpledialog.askstring("카테고리 이름 변경", "새 이름을 입력하세요:")
+            if new_name:  # 사용자가 이름을 입력하고 'OK'를 누른 경우
+                self.findCategory(root, selected_item[0]).name = new_name
+                self.tree.item(selected_item[0], text=new_name)  # 선택된 아이템의 이름을 새로운 이름으로 변경
+
+    def updateTreeview(self, node, parent = None):
+        if isinstance(node, bookmark.Root):
+            pass
+        elif isinstance(node, bookmark.Category):
+            if isinstance(parent, bookmark.Category):
+                self.tree.insert(parent.name, "end", text=node.name, iid=node.name)
             elif isinstance(parent, bookmark.BookmarkItem):
                 self.tree.insert(parent.paper, "end", text=node.name, iid=node.name)
             else:
@@ -52,27 +116,11 @@ class BookmarkTab:
                 self.tree.insert("", "end", text=node.paper, iid=node.paper)
 
         for child in node.children:
-            self.insertNode(child, node)
+            self.updateTreeview(child, node)
 
-    def addCategory(self):
-        name = simpledialog.askstring("카테고리 이름 설정", "카테고리 이름을 입력하세요:")
-        c = bookmark.Category(name)
-        self.insertNode(c)
-
-    def delCategory(self):
-        global root
-
-        selected_item = self.tree.selection()
-        if selected_item:
-            self.tree.delete(selected_item)
-
-    def changeItemName(self):
-        selected_items = self.tree.selection()
-        if selected_items:  # 선택된 아이템이 있는지 확인
-            new_name = simpledialog.askstring("카테고리 이름 변경", "새 이름을 입력하세요:")
-            if new_name:  # 사용자가 이름을 입력하고 'OK'를 누른 경우
-                for item in selected_items:
-                    self.tree.item(item, text=new_name)  # 선택된 아이템의 이름을 새로운 이름으로 변경
+    def clearTreeview(self):
+        for item in self.tree.get_children():
+            self.tree.delete(item)   
 
 def expandAllItems(tree, item=''):
     for child in tree.get_children(item):

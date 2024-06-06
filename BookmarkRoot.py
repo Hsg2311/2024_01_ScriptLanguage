@@ -1,3 +1,6 @@
 import bookmark
 
-root = bookmark.Category("Root")
+root = bookmark.Root()
+
+searchTabUpdate = False
+bookmarkTabUpdate = False

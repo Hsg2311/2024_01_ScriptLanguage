@@ -10,6 +10,8 @@ from ViewTab import *
 from GIFAnimation import *
 import GuiConfig
 
+from BookmarkRoot import root
+
 class MainGUI:
     def __init__(self):
         self.master = Tk()
@@ -27,7 +29,6 @@ class MainGUI:
 
         self.bookmarkTab = BookmarkTab(self)
         self.notebook.add(self.bookmarkTab.frame, text="북마크")
-        self.searchTab.addBookmarkTab(self.bookmarkTab)
 
         self.memoTab = MemoTab(self)
         self.notebook.add(self.memoTab.frame, text="메모")
@@ -39,6 +40,8 @@ class MainGUI:
         self.notebook.add(self.viewTab.frame, text="보기")
 
         self.notebook.hide(self.viewTab.frame)
+
+        self.notebook.bind("<<NotebookTabChanged>>", self.on_tab_changed)
 
         self.gif = GIFAnimation(GuiConfig.GIF_WIDTH, GuiConfig.GIF_HEIGHT)
         self.gifLabel = Label(self.master, image=self.gif.image())
@@ -56,6 +59,12 @@ class MainGUI:
         self.gif.advance()
         self.gifLabel.configure(image=self.gif.image())
         self.master.after(100, self.updateGIF)
+
+    def on_tab_changed(self, event):
+        global root
+
+        self.bookmarkTab.clearTreeview()
+        self.bookmarkTab.updateTreeview(root)
 
 if __name__ == "__main__":
     MainGUI()

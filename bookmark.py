@@ -22,15 +22,25 @@ class Node:
         if self.parent is not None:
             self.parent.delete(self)
 
+class Root(Node):
+    def __init__(self):
+        super().__init__()
+
 class Category(Node):
     def __init__(self, name):
         super().__init__()
         self.name = name
 
+    def owns(self, name):
+        return self.name == name
+
 class BookmarkItem(Node):
     def __init__(self, paper):
         super().__init__()
         self.paper = paper
+
+    def owns(self, paper):
+        return self.paper == paper
 
 def traverse(node, indentLevel=0):
     print("    " * indentLevel, end="")
