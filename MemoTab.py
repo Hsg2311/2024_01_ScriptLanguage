@@ -6,6 +6,7 @@ from xml.dom import minidom
 
 import GuiConfig
 import papery
+from save import SaveCollector
 
 # smtp 정보
 host = "smtp.gmail.com" # Gmail SMTP 서버 주소.
@@ -47,8 +48,8 @@ class MemoTab:
 
     def __init__(self, mainGUI):
         self.mainGUI = mainGUI
+        self.mainGUI.saveCollector.add_saver(self)
         self.master = mainGUI.master
-        self.master.protocol("WM_DELETE_WINDOW", self.onClosing)
 
         self.frame = Frame(self.master)
         self.frame.pack()
@@ -97,7 +98,7 @@ class MemoTab:
         except:
             pass
 
-    def onClosing(self):
+    def save(self):
         for memo in self.memos:
             memo.update()
 
@@ -111,9 +112,9 @@ class MemoTab:
             memoElement.appendChild(saveDoc.createTextNode(memo.text))
             memosElement.appendChild(memoElement)
 
-        print(saveDoc.toprettyxml(), file=open("memo.xml", "w", encoding="utf-8"))
-
-        self.master.destroy()
+        print( saveDoc.toprettyxml(),
+            file=open(papery.CACHE_PREFIX + "memo.xml", "w", encoding="utf-8")
+        )
 
     def addMemo(self, text=''):
         self.memos.append(Memo(self.grids, text))
