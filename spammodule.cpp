@@ -4,6 +4,10 @@
 #include <string>
 #include <stdexcept>
 #include <string_view>
+#include <fstream>
+#include <ranges>
+#include <algorithm>
+#include <array>
 
 using namespace std::literals;
 
@@ -22,6 +26,15 @@ public:
 	static consteval std::string_view searchType_Author() { return "Author"sv; }
 	static consteval std::string_view searchType_Journal() { return "Journal"sv; }
 	static consteval std::string_view searchType_Institution() { return "Institution"sv; }
+
+	SearchLog(const std::string& keyword, const std::string& type, const std::string& timeStamp)
+		: keyword_(keyword), type_(type), timeStamp_(timeStamp)
+	{
+		if (type != searchType_Title() && type != searchType_Author() && type != searchType_Journal() && type != searchType_Institution())
+			throw std::invalid_argument("Invalid search type\n"
+				"Available search types are Title, Author, Journal, Institution"
+			);
+	}
 
 	SearchLog(const std::string& keyword, const std::string& type)
 		: keyword_(keyword), type_(type), timeStamp_(mkTimeStamp())
@@ -44,6 +57,9 @@ private:
 
 class ViewLog {
 public:
+	ViewLog(const std::string& title, const std::string& author, std::size_t year, const std::string& timeStamp)
+		: title_(title), author_(author), year_(year), timeStamp_(timeStamp) {}
+
 	ViewLog(const std::string& title, const std::string& author, std::size_t year)
 		: title_(title), author_(author), year_(year), timeStamp_(mkTimeStamp()) {}
 
@@ -62,7 +78,93 @@ private:
 std::deque<SearchLog> gSearchLog;
 std::deque<ViewLog> gViewLog;
 
+static PyObject* loadSearchLog(PyObject* self, PyObject* args)
+{
+	const char* filename = nullptr;
+	if (!PyArg_ParseTuple(args, "s", &filename))
+		return nullptr;
 
+	auto in = std::ifstream(filename);
+	if (!in) {
+		PyErr_SetString(PyExc_FileNotFoundError, "File log/search.log not found");
+		return nullptr;
+	}
+
+	std::string line;
+	while (std::getline(in, line)) {
+		std::array<std::string, 3> log;
+		std::ranges::copy( line | std::views::split('|')
+			| std::views::transform( [](auto&& sv) { return std::string(sv.begin(), sv.end()); } ),
+			log.begin()
+		);
+
+		gSearchLog.emplace_back(log[1], log[2], log[0]);
+	}
+
+	Py_RETURN_NONE;
+}
+
+static PyObject* saveSearchLog(PyObject* self, PyObject* args)
+{
+	const char* filename = nullptr;
+	if (!PyArg_ParseTuple(args, "s", &filename))
+		return nullptr;
+
+	auto out = std::ofstream(filename);
+
+	std::string line;
+	for (const auto& log : gSearchLog) {
+		line = log.timeStamp() + "|" + log.keyword() + "|" + log.type() + "\n";
+		out << line;
+	}
+
+	Py_RETURN_NONE;
+}
+
+static PyObject* loadViewLog(PyObject* self, PyObject* args)
+{
+	const char* filename = nullptr;
+	if (!PyArg_ParseTuple(args, "s", &filename))
+		return nullptr;
+
+	auto in = std::ifstream(filename);
+	if (!in) {
+		PyErr_SetString(PyExc_FileNotFoundError, "File log/view.log not found");
+		return nullptr;
+	}
+
+	std::string line;
+	while (std::getline(in, line)) {
+		std::array<std::string, 4> log;
+		std::ranges::copy(line | std::views::split('|')
+			| std::views::transform([](auto&& sv) { return std::string(sv.begin(), sv.end()); }),
+			log.begin()
+		);
+
+		gViewLog.emplace_back(log[1], log[2], std::stoi(log[3]), log[0]);
+	}
+
+	Py_RETURN_NONE;
+}
+
+static PyObject* saveViewLog(PyObject* self, PyObject* args)
+{
+	const char* filename = nullptr;
+	if (!PyArg_ParseTuple(args, "s", &filename))
+		return nullptr;
+
+	auto out = std::ofstream("log/view.log");
+
+	std::string line;
+	for (const auto& log : gViewLog) {
+		line = log.timeStamp() + "|" + log.title() + "|" + log.author() + "|" + std::to_string(log.year()) + "\n";
+		out << line;
+	}
+
+	Py_RETURN_NONE;
+}
+
+// don't include | in keyword and type
 static PyObject* logSearch(PyObject* self, PyObject* args)
 {
 	const char* keyword = nullptr;
@@ -82,6 +184,7 @@ static PyObject* logSearch(PyObject* self, PyObject* args)
 	Py_RETURN_NONE;
 }
 
+// don't include | in title and author
 static PyObject* logView(PyObject* self, PyObject* args)
 {
 	const char* title = nullptr;
@@ -120,7 +223,7 @@ static PyObject* getSearchLog(PyObject* self, PyObject* args)
 	}
 
 	const auto& log = gSearchLog[index];
-	
+
 	// make dictionary
 	PyObject* dict = PyDict_New();
 	PyDict_SetItemString(dict, "keyword", PyUnicode_FromString(log.keyword().c_str()));
@@ -158,6 +261,10 @@ static PyObject* getViewLog(PyObject* self, PyObject* args)
 
 
 static PyMethodDef SpamMethods[] = {
+	{ "loadSearchLog", loadSearchLog, METH_VARARGS, "Load search log" },
+	{ "saveSearchLog", saveSearchLog, METH_VARARGS, "Save search log" },
+	{ "loadViewLog", loadViewLog, METH_VARARGS, "Load view log" },
+	{ "saveViewLog", saveViewLog, METH_VARARGS, "Save view log" },
 	{ "logSearch", logSearch, METH_VARARGS, "Log search" },
 	{ "logView", logView, METH_VARARGS, "Log view" },
 	{ "searchLogSize", searchLogSize, METH_NOARGS, "Get search log size" },

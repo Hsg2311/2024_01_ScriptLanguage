@@ -102,6 +102,17 @@ class SearchTab:
         )
 
     def search(self):
+        if self.searchModeIdx.get() == Board.SEARCH_MODE_TITLE:
+            logSearchMode = self.mainGUI.logTab.TITLE_MODE
+        elif self.searchModeIdx.get() == Board.SEARCH_MODE_AUTHOR:
+            logSearchMode = self.mainGUI.logTab.AUTHOR_MODE
+        elif self.searchModeIdx.get() == Board.SEARCH_MODE_JOURNAL:
+            logSearchMode = self.mainGUI.logTab.JOURNAL_MODE
+        elif self.searchModeIdx.get() == Board.SEARCH_MODE_INSTITUTION:
+            logSearchMode = self.mainGUI.logTab.INSTITUTION_MODE
+
+        self.mainGUI.logTab.logSearch(self.searchStr.get(), logSearchMode)
+
         def task():
             self.onLoadingPages()
             self.board.search(self.searchStr.get(), self.searchModeIdx.get())
