@@ -263,12 +263,20 @@ class SearchTab:
             self.updateTreeview(child, node)
 
     def addPaper(self):
-        item = self.tree.focus_get()
-        if not isinstance(item, bookmark.Category):
-            return
+        s = ''.join(self.tree.selection())
+        print(s)
         
-        
-        pass
+    def findCategory(self, node, name):
+        for child in node.children:
+            if isinstance(child, bookmark.Category) and child.owns(name):
+                return child
+        for child in node.children:
+            tmp = self.findCategory(child, name)
+            if tmp is not None:
+                return tmp
+            
+        return None
+        # bi = bookmark.BookmarkItem()
 
 def expandAllItems(tree, item=''):
     for child in tree.get_children(item):
