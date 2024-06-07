@@ -91,7 +91,7 @@ class SearchTab:
             if rec.owns(item):
                 new_window = Toplevel(self.mainGUI.master)
                 new_window.title('북마크')
-                new_window.geometry('250x300')
+                new_window.geometry('330x300')
 
                 new_window_frame = Frame(new_window, bg='white')
                 new_window_frame.pack(expand=True, fill='both')
@@ -104,12 +104,15 @@ class SearchTab:
 
                 self.updateTreeview(root)
 
-                addButton = Button(new_window_frame, text='+', command=self.addCategory)
-                addButton.place(x=205, y=0, width=40, height=40)
-                delButton = Button(new_window_frame, text='-', command=self.delCategory)
-                delButton.place(x=205, y=50, width=40, height=40)
-                ncButton = Button(new_window_frame, text='수정', command=self.changeItemName)
-                ncButton.place(x=205, y=100, width=40, height=40)
+                addButton = Button(new_window_frame, text='카테고리 추가', command=self.addCategory)
+                addButton.place(x=205, y=0, width=90, height=30)
+                delButton = Button(new_window_frame, text='카테고리 삭제', command=self.delCategory)
+                delButton.place(x=205, y=50, width=90, height=30)
+                ncButton = Button(new_window_frame, text='카테고리 이름 수정', command=self.changeItemName)
+                ncButton.place(x=205, y=100, width=120, height=30)
+                
+                addPaperButton = Button(new_window_frame, text='+', command=self.addPaper)
+                addPaperButton.place(x=205, y=150, width=50, height=30)
 
                 expandAllItems(self.tree)
 
@@ -198,25 +201,19 @@ class SearchTab:
         if isinstance(node, bookmark.Category):
             if isinstance(parent, bookmark.Category):
                 self.tree.insert(parent.name, "end", text=node.name, iid=node.name)
-                print('shut')
                 parent.insert(bookmark.Category(node.name))
             elif isinstance(parent, bookmark.BookmarkItem):
-                print('the')
                 self.tree.insert(parent.paper, "end", text=node.name, iid=node.name)
                 parent.insert(bookmark.Category(node.name))
             else:
-                print('fuck')
                 self.tree.insert("", "end", text=node.name, iid=node.name)
                 root.insert(bookmark.Category(node.name))
         else:
             if isinstance(parent, bookmark.Category):
-                print('up')
                 self.tree.insert(parent.name, "end", text=node.paper, iid=node.paper)
             elif isinstance(parent, bookmark.BookmarkItem):
-                print('little')
                 self.tree.insert(parent.paper, "end", text=node.paper, iid=node.paper)
             else:
-                print('pussy')
                 self.tree.insert("", "end", text=node.paper, iid=node.paper)
 
         for child in node.children:
@@ -264,6 +261,14 @@ class SearchTab:
 
         for child in node.children:
             self.updateTreeview(child, node)
+
+    def addPaper(self):
+        item = self.tree.focus_get()
+        if not isinstance(item, bookmark.Category):
+            return
+        
+        
+        pass
 
 def expandAllItems(tree, item=''):
     for child in tree.get_children(item):

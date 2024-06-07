@@ -23,12 +23,12 @@ class BookmarkTab:
         self.tree = ttk.Treeview(self.frame)
         self.tree.place(x=50, y=50, width=500, height=400)
 
-        self.addButton = Button(self.frame, text='+', command=self.addCategory)
-        self.addButton.place(x=600, y=150, width=50, height=50)
-        self.delButton = Button(self.frame, text='-', command=self.delCategory)
-        self.delButton.place(x=600, y=210, width=50, height=50)
-        self.ncButton = Button(self.frame, text='Modify', command=self.changeItemName)
-        self.ncButton.place(x=600, y=270, width=50, height=50)
+        self.addButton = Button(self.frame, text='카테고리 추가', command=self.addCategory)
+        self.addButton.place(x=600, y=150, width=90, height=30)
+        self.delButton = Button(self.frame, text='카테고리 삭제', command=self.delCategory)
+        self.delButton.place(x=600, y=210, width=90, height=30)
+        self.ncButton = Button(self.frame, text='카테고리 이름 수정', command=self.changeItemName)
+        self.ncButton.place(x=600, y=270, width=120, height=30)
 
         # self.insertNode(BookmarkRoot)
         expandAllItems(self.tree)
@@ -38,25 +38,19 @@ class BookmarkTab:
         if isinstance(node, bookmark.Category):
             if isinstance(parent, bookmark.Category):
                 self.tree.insert(parent.name, "end", text=node.name, iid=node.name)
-                print('shut')
                 parent.insert(bookmark.Category(node.name))
             elif isinstance(parent, bookmark.BookmarkItem):
-                print('the')
                 self.tree.insert(parent.paper, "end", text=node.name, iid=node.name)
                 parent.insert(bookmark.Category(node.name))
             else:
-                print('fuck')
                 self.tree.insert("", "end", text=node.name, iid=node.name)
                 root.insert(bookmark.Category(node.name))
         else:
             if isinstance(parent, bookmark.Category):
-                print('up')
                 self.tree.insert(parent.name, "end", text=node.paper, iid=node.paper)
             elif isinstance(parent, bookmark.BookmarkItem):
-                print('little')
                 self.tree.insert(parent.paper, "end", text=node.paper, iid=node.paper)
             else:
-                print('pussy')
                 self.tree.insert("", "end", text=node.paper, iid=node.paper)
 
         for child in node.children:
