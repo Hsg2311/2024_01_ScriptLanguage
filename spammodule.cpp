@@ -271,7 +271,7 @@ static PyMethodDef SpamMethods[] = {
 	{ "viewLogSize", viewLogSize, METH_NOARGS, "Get view log size" },
 	{ "getSearchLog", getSearchLog, METH_VARARGS, "Get search log" },
 	{ "getViewLog", getViewLog, METH_VARARGS, "Get view log" },
-	{ NULL, NULL, 0, NULL } // 배열의 끝을 나타냅니다.
+	{ NULL, NULL, 0, NULL }
 };
 
 static struct PyModuleDef spammodule = {
