@@ -19,8 +19,6 @@ class ViewTab:
         self.summarizer = Summarizer()
 
     def show(self, returnTab):
-        self.mainGUI.logTab.logView(self.paper.title, self.paper.authors, self.paper.year)
-
         self.returnTab = returnTab
         self.mainGUI.notebook.select(self.frame)
 

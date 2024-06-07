@@ -111,15 +111,14 @@ class SearchTab:
         elif self.searchModeIdx.get() == Board.SEARCH_MODE_INSTITUTION:
             logSearchMode = self.mainGUI.logTab.INSTITUTION_MODE
 
-        self.mainGUI.logTab.logSearch(self.searchStr.get(), logSearchMode)
-
         def task():
-            self.onLoadingPages()
+            self.mainGUI.logTab.logSearch(self.searchStr.get(), logSearchMode)
+            self.onLoading()
             self.board.search(self.searchStr.get(), self.searchModeIdx.get())
             self.trayBasePage = 1
 
         def onCompletion(result):
-            self.onLoadedPages()
+            self.onLoaded()
             self.update()
 
         Loading(self.master, task, onCompletion)
@@ -180,11 +179,11 @@ class SearchTab:
 
     def nextPage(self):
         def task():
-            self.onLoadingPages()
+            self.onLoading()
             return self.board.nextPage()
 
         def onCompletion(result):
-            self.onLoadedPages()
+            self.onLoaded()
 
             if not result:
                 return
@@ -204,17 +203,26 @@ class SearchTab:
         self.update()
 
     def view(self):
-        item = self.resultList.focus_get()
-        if not isinstance(item, Text):
-            return
+        def task():
+            self.onLoading()
         
-        for rec in self.curRecords:
-            if rec.owns(item):
-                self.mainGUI.viewTab.setPaper(rec.paper)
+            item = self.resultList.focus_get()
+            if not isinstance(item, Text):
+                return
+            
+            for rec in self.curRecords:
+                if rec.owns(item):
+                    self.mainGUI.viewTab.setPaper(rec.paper)
 
-        self.mainGUI.viewTab.show(self)
+            self.mainGUI.logTab.logView(rec.paper.title, rec.paper.authors, rec.paper.year)
 
-    def onLoadingPages(self):
+        def onCompletion(result):
+            self.onLoaded()
+            self.mainGUI.viewTab.show(self)
+
+        Loading(self.master, task, onCompletion)
+
+    def onLoading(self):
         # disable all buttons
         self.searchButton['state'] = 'disabled'
         self.viewButton['state'] = 'disabled'
@@ -224,7 +232,7 @@ class SearchTab:
                 button['state'] = 'disabled'
 
     
-    def onLoadedPages(self):
+    def onLoaded(self):
         # enable all buttons
         self.searchButton['state'] = 'normal'
         self.viewButton['state'] = 'normal'
