@@ -89,9 +89,11 @@ class SearchTab:
         
         for rec in self.curRecords:
             if rec.owns(item):
+                self.selected_paper = rec.paper
+
                 new_window = Toplevel(self.mainGUI.master)
                 new_window.title('북마크')
-                new_window.geometry('330x300')
+                new_window.geometry('360x330')
 
                 new_window_frame = Frame(new_window, bg='white')
                 new_window_frame.pack(expand=True, fill='both')
@@ -102,17 +104,25 @@ class SearchTab:
                 self.tree = ttk.Treeview(new_window_frame)
                 self.tree.place(x=0, y=0, width=200, height=300)
 
+                vScrollbar = ttk.Scrollbar(new_window_frame, orient='vertical', command=self.tree.yview)
+                self.tree.configure(yscrollcommand=vScrollbar.set)
+                vScrollbar.place(x=200, y=1, width=20, height=300)
+
+                hScrollbar = ttk.Scrollbar(new_window_frame, orient='horizontal', command=self.tree.xview)
+                self.tree.configure(xscrollcommand=hScrollbar.set)
+                hScrollbar.place(x=1, y=300, width=199, height=20)
+
                 self.updateTreeview(root)
 
                 addButton = Button(new_window_frame, text='카테고리 추가', command=self.addCategory)
-                addButton.place(x=205, y=0, width=90, height=30)
+                addButton.place(x=225, y=0, width=90, height=30)
                 delButton = Button(new_window_frame, text='카테고리 삭제', command=self.delCategory)
-                delButton.place(x=205, y=50, width=90, height=30)
+                delButton.place(x=225, y=50, width=90, height=30)
                 ncButton = Button(new_window_frame, text='카테고리 이름 수정', command=self.changeItemName)
-                ncButton.place(x=205, y=100, width=120, height=30)
+                ncButton.place(x=225, y=100, width=120, height=30)
                 
                 addPaperButton = Button(new_window_frame, text='+', command=self.addPaper)
-                addPaperButton.place(x=205, y=150, width=50, height=30)
+                addPaperButton.place(x=225, y=150, width=50, height=30)
 
                 expandAllItems(self.tree)
 
@@ -210,7 +220,8 @@ class SearchTab:
                 root.insert(bookmark.Category(node.name))
         else:
             if isinstance(parent, bookmark.Category):
-                self.tree.insert(parent.name, "end", text=node.paper, iid=node.paper)
+                self.tree.insert(parent.name, "end", text=node.paper.title, iid=node.paper)
+                parent.insert(node)
             elif isinstance(parent, bookmark.BookmarkItem):
                 self.tree.insert(parent.paper, "end", text=node.paper, iid=node.paper)
             else:
@@ -253,7 +264,7 @@ class SearchTab:
                 self.tree.insert("", "end", text=node.name, iid=node.name)
         else:
             if isinstance(parent, bookmark.Category):
-                self.tree.insert(parent.name, "end", text=node.paper, iid=node.paper)
+                self.tree.insert(parent.name, "end", text=node.paper.title, iid=node.paper)
             elif isinstance(parent, bookmark.BookmarkItem):
                 self.tree.insert(parent.paper, "end", text=node.paper, iid=node.paper)
             else:
@@ -263,8 +274,13 @@ class SearchTab:
             self.updateTreeview(child, node)
 
     def addPaper(self):
+        global root
         s = ''.join(self.tree.selection())
-        print(s)
+        c = self.findCategory(root, s)
+
+        if c is not None:
+            bi = bookmark.BookmarkItem(self.selected_paper)
+            self.insertNode(bi, c)
         
     def findCategory(self, node, name):
         for child in node.children:
@@ -276,7 +292,6 @@ class SearchTab:
                 return tmp
             
         return None
-        # bi = bookmark.BookmarkItem()
 
 def expandAllItems(tree, item=''):
     for child in tree.get_children(item):

@@ -30,6 +30,11 @@ class BookmarkTab:
         self.ncButton = Button(self.frame, text='카테고리 이름 수정', command=self.changeItemName)
         self.ncButton.place(x=600, y=270, width=120, height=30)
 
+        delPaperButton = Button(self.frame, text='-', command=self.delPaper)
+        delPaperButton.place(x=600, y=330, width=50, height=30)
+        viewButton = Button(self.frame, text='보기', command=self.view)
+        viewButton.place(x=600, y=400, width=50, height=30)
+
         # self.insertNode(BookmarkRoot)
         expandAllItems(self.tree)
 
@@ -47,7 +52,7 @@ class BookmarkTab:
                 root.insert(bookmark.Category(node.name))
         else:
             if isinstance(parent, bookmark.Category):
-                self.tree.insert(parent.name, "end", text=node.paper, iid=node.paper)
+                self.tree.insert(parent.name, "end", text=node.paper.title, iid=node.paper)
             elif isinstance(parent, bookmark.BookmarkItem):
                 self.tree.insert(parent.paper, "end", text=node.paper, iid=node.paper)
             else:
@@ -66,6 +71,14 @@ class BookmarkTab:
                 return tmp
             
         return None
+    
+    def findBookmarkItem(self, node, paper):
+        for category in node.children:
+            for bookmarkItem in category.children:
+                if isinstance(bookmarkItem, bookmark.BookmarkItem) and bookmarkItem.owns(paper):
+                    return bookmarkItem
+            
+        return None
 
     def addCategory(self):
         global root
@@ -77,7 +90,6 @@ class BookmarkTab:
         global root
 
         selected_item = self.tree.selection()
-        print(selected_item)
         if selected_item:
             self.findCategory(root, selected_item[0]).destroy()
             self.tree.delete(selected_item)
@@ -103,7 +115,7 @@ class BookmarkTab:
                 self.tree.insert("", "end", text=node.name, iid=node.name)
         else:
             if isinstance(parent, bookmark.Category):
-                self.tree.insert(parent.name, "end", text=node.paper, iid=node.paper)
+                self.tree.insert(parent.name, "end", text=node.paper.title, iid=node.paper)
             elif isinstance(parent, bookmark.BookmarkItem):
                 self.tree.insert(parent.paper, "end", text=node.paper, iid=node.paper)
             else:
@@ -114,7 +126,19 @@ class BookmarkTab:
 
     def clearTreeview(self):
         for item in self.tree.get_children():
-            self.tree.delete(item)   
+            self.tree.delete(item) 
+
+    def delPaper(self):
+        pass
+
+    def view(self):
+        paperTitle = self.tree.selection()
+        s = ''.join(paperTitle)
+
+        paper = self.findBookmarkItem(root, s)
+        print(paper)
+        self.mainGUI.viewTab.setPaper(paper)
+        self.mainGUI.viewTab.show(self)
 
 def expandAllItems(tree, item=''):
     for child in tree.get_children(item):
