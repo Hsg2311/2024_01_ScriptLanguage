@@ -213,6 +213,7 @@ class SearchTab:
             for rec in self.curRecords:
                 if rec.owns(item):
                     self.mainGUI.viewTab.setPaper(rec.paper)
+                    break
 
             self.mainGUI.logTab.logView(rec.paper.title, rec.paper.authors, rec.paper.year)
 

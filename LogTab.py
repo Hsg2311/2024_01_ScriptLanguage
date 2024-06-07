@@ -5,6 +5,35 @@ import GuiConfig
 import os
 import spam
 
+class LogTxt:
+    def __init__(self, master, frame, txt):
+        self.master = master
+        self.frame = frame
+        self.txt = txt
+        
+        self.widget = Text(self.frame, height=1, wrap=WORD,
+            width=GuiConfig.LOG_LOG_TEXT_WIDTH,
+            font=GuiConfig.cFont, bg='white', fg='black'
+        )
+        self.widget.insert(END, self.txt)
+        self.widget.pack(fill=X, expand=True)
+
+        self.widget.bind("<FocusIn>", self.onFocusIn)
+        self.widget.bind("<FocusOut>", self.onFocusOut)
+
+        # it must be called to get the height of the text widget
+        self.master.update_idletasks()
+
+        height = self.master.call((self.widget, "count", "-update", "-displaylines", "1.0", "end"))
+        self.widget.config(height=height)
+        self.widget['state'] = 'disabled'
+
+    def onFocusIn(self, event):
+        self.widget.config(bg='light blue', fg='white')
+    
+    def onFocusOut(self, event):
+        self.widget.config(bg='white', fg='black')
+
 class LogTab:
     TITLE_MODE = "Title"
     AUTHOR_MODE = "Author"
@@ -80,46 +109,18 @@ class LogTab:
     
     def __viewLogToStr(self, log):
         return log['timeStamp'] + '| ' + log['author'] + ' | ' + str(log['year']) + ' | ' + log['title']
-    
-    def __appendSearchLogStr(self, s):
-        self.searchLogTxts.append(Text(self.searchLogFrame, height=1,
-            wrap=WORD, width=GuiConfig.LOG_LOG_TEXT_WIDTH
-        ))
-        self.searchLogTxts[-1].insert(END, s)
-        self.searchLogTxts[-1].pack(fill=X, expand=True)
-
-        # it must be called to get the height of the text widget
-        self.master.update_idletasks()
-
-        height = self.master.call((self.searchLogTxts[-1], "count", "-update", "-displaylines", "1.0", "end"))
-        self.searchLogTxts[-1].config(height=height)
-        self.searchLogTxts[-1]['state'] = 'disabled'
-
-    def __appendViewLogStr(self, s):
-        self.viewLogTxts.append(Text(self.viewLogFrame, height=1,
-            wrap=WORD, width=GuiConfig.LOG_LOG_TEXT_WIDTH
-        ))
-        self.viewLogTxts[-1].insert(END, s)
-        self.viewLogTxts[-1].pack(fill=X, expand=True)
-
-        # it must be called to get the height of the text widget
-        self.master.update_idletasks()
-
-        height = self.master.call((self.viewLogTxts[-1], "count", "-update", "-displaylines", "1.0", "end"))
-        self.viewLogTxts[-1].config(height=height)
-        self.viewLogTxts[-1]['state'] = 'disabled'
 
     def logSearch(self, searchStr, searchMode):
         spam.logSearch(searchStr, searchMode)
-        self.__appendSearchLogStr( self.__searchLogToStr(
-            spam.getSearchLog(spam.searchLogSize() - 1)
+        self.searchLogTxts.append( LogTxt(self.master, self.searchLogFrame,
+            self.__searchLogToStr( spam.getSearchLog(spam.searchLogSize() - 1) )
         ) )
         self.adjustScrollbar()
 
     def logView(self, title, authors, year):
         spam.logView(title, ', '.join(authors), int(year))
-        self.__appendViewLogStr( self.__viewLogToStr(
-            spam.getViewLog(spam.viewLogSize() - 1)
+        self.viewLogTxts.append( LogTxt(self.master, self.viewLogFrame,
+            self.__viewLogToStr( spam.getViewLog(spam.viewLogSize() - 1) )
         ) )
         self.adjustScrollbar()
 
@@ -128,9 +129,9 @@ class LogTab:
             spam.loadSearchLog('log/search.log')
 
         for i in range(spam.searchLogSize()):
-            self.__appendSearchLogStr(
+            self.searchLogTxts.append( LogTxt(self.master, self.searchLogFrame,
                 self.__searchLogToStr( spam.getSearchLog(i) )
-            )
+            ) )
         self.adjustScrollbar()
             
 
@@ -139,9 +140,9 @@ class LogTab:
             spam.loadViewLog('log/view.log')
 
         for i in range(spam.viewLogSize()):
-            self.__appendViewLogStr(
+            self.viewLogTxts.append( LogTxt(self.master, self.viewLogFrame,
                 self.__viewLogToStr( spam.getViewLog(i) )
-            )
+            ) )
         self.adjustScrollbar()
 
     def saveSearchLog(self):
