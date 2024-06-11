@@ -57,21 +57,23 @@ private:
 
 class ViewLog {
 public:
-	ViewLog(const std::string& title, const std::string& author, std::size_t year, const std::string& timeStamp)
-		: title_(title), author_(author), year_(year), timeStamp_(timeStamp) {}
+	ViewLog(const std::string& title, const std::string& author, std::size_t year, const std::string& artiID, const std::string& timeStamp)
+		: title_(title), author_(author), year_(year), artiID_(artiID), timeStamp_(timeStamp) {}
 
-	ViewLog(const std::string& title, const std::string& author, std::size_t year)
-		: title_(title), author_(author), year_(year), timeStamp_(mkTimeStamp()) {}
+	ViewLog(const std::string& title, const std::string& author, std::size_t year, const std::string& artiID)
+		: title_(title), author_(author), year_(year), artiID_(artiID), timeStamp_(mkTimeStamp()) {}
 
 	const std::string& title() const { return title_; }
 	const std::string& author() const { return author_; }
 	std::size_t year() const { return year_; }
+	const std::string& artiID() const { return artiID_; }
 	const std::string& timeStamp() const { return timeStamp_; }
 
 private:
 	std::string title_;
 	std::string author_;
 	std::size_t year_;
+	std::string artiID_;
 	std::string timeStamp_;
 };
 
@@ -93,8 +95,8 @@ static PyObject* loadSearchLog(PyObject* self, PyObject* args)
 	std::string line;
 	while (std::getline(in, line)) {
 		std::array<std::string, 3> log;
-		std::ranges::copy( line | std::views::split('|')
-			| std::views::transform( [](auto&& sv) { return std::string(sv.begin(), sv.end()); } ),
+		std::ranges::copy(line | std::views::split('|')
+			| std::views::transform([](auto&& sv) { return std::string(sv.begin(), sv.end()); }),
 			log.begin()
 		);
 
@@ -135,13 +137,13 @@ static PyObject* loadViewLog(PyObject* self, PyObject* args)
 
 	std::string line;
 	while (std::getline(in, line)) {
-		std::array<std::string, 4> log;
+		std::array<std::string, 5> log;
 		std::ranges::copy(line | std::views::split('|')
 			| std::views::transform([](auto&& sv) { return std::string(sv.begin(), sv.end()); }),
 			log.begin()
 		);
 
-		gViewLog.emplace_back(log[1], log[2], std::stoi(log[3]), log[0]);
+		gViewLog.emplace_back(log[1], log[2], std::stoi(log[3]), log[4], log[0]);
 	}
 
 	Py_RETURN_NONE;
@@ -157,7 +159,8 @@ static PyObject* saveViewLog(PyObject* self, PyObject* args)
 
 	std::string line;
 	for (const auto& log : gViewLog) {
-		line = log.timeStamp() + "|" + log.title() + "|" + log.author() + "|" + std::to_string(log.year()) + "\n";
+		line = log.timeStamp() + "|" + log.title() + "|" + log.author() + "|" + std::to_string(log.year())
+			+ "|" + log.artiID() + "\n";
 		out << line;
 	}
 
@@ -190,11 +193,12 @@ static PyObject* logView(PyObject* self, PyObject* args)
 	const char* title = nullptr;
 	const char* author = nullptr;
 	int year;
+	const char* artiID = nullptr;
 
-	if (!PyArg_ParseTuple(args, "ssi", &title, &author, &year))
+	if (!PyArg_ParseTuple(args, "ssis", &title, &author, &year, &artiID))
 		return nullptr;
 
-	gViewLog.emplace_back(title, author, year);
+	gViewLog.emplace_back(title, author, year, artiID);
 
 	Py_RETURN_NONE;
 }
@@ -253,6 +257,7 @@ static PyObject* getViewLog(PyObject* self, PyObject* args)
 	PyDict_SetItemString(dict, "title", PyUnicode_FromString(log.title().c_str()));
 	PyDict_SetItemString(dict, "author", PyUnicode_FromString(log.author().c_str()));
 	PyDict_SetItemString(dict, "year", PyLong_FromSize_t(log.year()));
+	PyDict_SetItemString(dict, "artiID", PyUnicode_FromString(log.artiID().c_str()));
 	PyDict_SetItemString(dict, "timeStamp", PyUnicode_FromString(log.timeStamp().c_str()));
 
 	return dict;

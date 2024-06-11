@@ -117,8 +117,8 @@ class LogTab:
         ) )
         self.adjustScrollbar()
 
-    def logView(self, title, authors, year):
-        spam.logView(title, ', '.join(authors), int(year))
+    def logView(self, title, authors, year, artiID):
+        spam.logView(title, ', '.join(authors), int(year), artiID)
         self.viewLogTxts.append( LogTxt(self.master, self.viewLogFrame,
             self.__viewLogToStr( spam.getViewLog(spam.viewLogSize() - 1) )
         ) )

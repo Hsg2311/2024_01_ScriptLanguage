@@ -215,7 +215,7 @@ class SearchTab:
                     self.mainGUI.viewTab.setPaper(rec.paper)
                     break
 
-            self.mainGUI.logTab.logView(rec.paper.title, rec.paper.authors, rec.paper.year)
+            self.mainGUI.logTab.logView(rec.paper.title, rec.paper.authors, rec.paper.year, rec.paper.articleID)
 
         def onCompletion(result):
             self.onLoaded()
