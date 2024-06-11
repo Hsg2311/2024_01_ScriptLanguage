@@ -3,6 +3,7 @@ from tkinter import messagebox
 
 from tkinter import ttk
 from tkinter import simpledialog
+from tkinter import Toplevel
 
 import bookmark
 
@@ -30,10 +31,12 @@ class BookmarkTab:
         self.ncButton = Button(self.frame, text='카테고리 이름 수정', command=self.changeItemName)
         self.ncButton.place(x=600, y=270, width=120, height=30)
 
-        delPaperButton = Button(self.frame, text='-', command=self.delPaper)
-        delPaperButton.place(x=600, y=330, width=50, height=30)
+        delPaperButton = Button(self.frame, text='논문 제거', command=self.delPaper)
+        delPaperButton.place(x=600, y=330, width=65, height=30)
         viewButton = Button(self.frame, text='보기', command=self.view)
         viewButton.place(x=600, y=400, width=50, height=30)
+        viewCitation = Button(self.frame, text='인용수', command=self.viewCitationCnt)
+        viewCitation.place(x=600, y=470, width=50, height=30)
 
         # self.insertNode(BookmarkRoot)
         expandAllItems(self.tree)
@@ -45,18 +48,19 @@ class BookmarkTab:
                 self.tree.insert(parent.name, "end", text=node.name, iid=node.name)
                 parent.insert(bookmark.Category(node.name))
             elif isinstance(parent, bookmark.BookmarkItem):
-                self.tree.insert(parent.paper, "end", text=node.name, iid=node.name)
+                self.tree.insert(parent.paper.title, "end", text=node.name, iid=node.name)
                 parent.insert(bookmark.Category(node.name))
             else:
                 self.tree.insert("", "end", text=node.name, iid=node.name)
                 root.insert(bookmark.Category(node.name))
         else:
             if isinstance(parent, bookmark.Category):
-                self.tree.insert(parent.name, "end", text=node.paper.title, iid=node.paper)
+                self.tree.insert(parent.name, "end", text=node.paper.title, iid=node.paper.title)
+                parent.insert(node)
             elif isinstance(parent, bookmark.BookmarkItem):
-                self.tree.insert(parent.paper, "end", text=node.paper, iid=node.paper)
+                self.tree.insert(parent.paper.title, "end", text=node.paper.title, iid=node.paper.title)
             else:
-                self.tree.insert("", "end", text=node.paper, iid=node.paper)
+                self.tree.insert("", "end", text=node.paper.title, iid=node.paper.title)
 
         for child in node.children:
             self.insertNode(child, node)
@@ -72,10 +76,10 @@ class BookmarkTab:
             
         return None
     
-    def findBookmarkItem(self, node, paper):
+    def findBookmarkItem(self, node, title):
         for category in node.children:
             for bookmarkItem in category.children:
-                if isinstance(bookmarkItem, bookmark.BookmarkItem) and bookmarkItem.owns(paper):
+                if isinstance(bookmarkItem, bookmark.BookmarkItem) and bookmarkItem.owns(title):
                     return bookmarkItem
             
         return None
@@ -110,16 +114,16 @@ class BookmarkTab:
             if isinstance(parent, bookmark.Category):
                 self.tree.insert(parent.name, "end", text=node.name, iid=node.name)
             elif isinstance(parent, bookmark.BookmarkItem):
-                self.tree.insert(parent.paper, "end", text=node.name, iid=node.name)
+                self.tree.insert(parent.paper.title, "end", text=node.name, iid=node.name)
             else:
                 self.tree.insert("", "end", text=node.name, iid=node.name)
         else:
             if isinstance(parent, bookmark.Category):
-                self.tree.insert(parent.name, "end", text=node.paper.title, iid=node.paper)
+                self.tree.insert(parent.name, "end", text=node.paper.title, iid=node.paper.title)
             elif isinstance(parent, bookmark.BookmarkItem):
-                self.tree.insert(parent.paper, "end", text=node.paper, iid=node.paper)
+                self.tree.insert(parent.paper.title, "end", text=node.paper.title, iid=node.paper.title)
             else:
-                self.tree.insert("", "end", text=node.paper, iid=node.paper)
+                self.tree.insert("", "end", text=node.paper.title, iid=node.paper.title)
 
         for child in node.children:
             self.updateTreeview(child, node)
@@ -129,16 +133,54 @@ class BookmarkTab:
             self.tree.delete(item) 
 
     def delPaper(self):
-        pass
+        global root
+
+        selected_item = self.tree.selection()
+        if selected_item:
+            self.findBookmarkItem(root, selected_item[0]).destroy()
+            self.tree.delete(selected_item[0])
 
     def view(self):
+        global root
+        
         paperTitle = self.tree.selection()
-        s = ''.join(paperTitle)
 
-        paper = self.findBookmarkItem(root, s)
-        print(paper)
-        self.mainGUI.viewTab.setPaper(paper)
+        paper = self.findBookmarkItem(root, paperTitle[0])
+        self.mainGUI.viewTab.setPaper(paper.paper)
         self.mainGUI.viewTab.show(self)
+
+    def viewCitationCnt(self):
+        global root
+
+        selected_item = self.tree.selection()
+        category = self.findCategory(root, selected_item[0])
+
+        if category:
+            new_window = Toplevel(self.mainGUI.master)
+            new_window.title('인용수 보기')
+            new_window.geometry('800x600+100+100')
+
+            listbox = Listbox(new_window)
+            
+            for i in range(len(category.children)-1, -1, -1):
+                listbox.insert(0, str(i+1)+'. '+category.children[i].paper.title)
+
+            listbox.place(x=0, y=0, width=200, height=200)
+            
+            vScrollbar = ttk.Scrollbar(new_window, orient='vertical', command=listbox.yview)
+            listbox.configure(yscrollcommand=vScrollbar.set)
+            vScrollbar.place(x=200, y=0, width=20, height=200)
+
+            hScrollbar = ttk.Scrollbar(new_window, orient='horizontal', command=listbox.xview)
+            listbox.configure(xscrollcommand=hScrollbar.set)
+            hScrollbar.place(x=0, y=200, width=200, height=20)
+
+            canvas = Canvas(new_window, bg='white', width=600, height= 500)
+            canvas.place(x=220, y=0, width=580, height=500)
+            hCanvasScrollbar = ttk.Scrollbar(new_window, orient='horizontal', command=canvas.xview)
+            canvas.configure(xscrollcommand=hCanvasScrollbar.set)
+            hCanvasScrollbar.place(x=220, y=500, width=580, height=20)
+            
 
 def expandAllItems(tree, item=''):
     for child in tree.get_children(item):

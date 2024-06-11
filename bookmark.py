@@ -39,8 +39,8 @@ class BookmarkItem(Node):
         super().__init__()
         self.paper = paper
 
-    def owns(self, paper):
-        return self.paper == paper
+    def owns(self, title):
+        return self.paper.title == title
 
 def traverse(node, indentLevel=0):
     print("    " * indentLevel, end="")
