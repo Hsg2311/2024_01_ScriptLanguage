@@ -215,7 +215,18 @@ class SearchTab:
                     self.mainGUI.viewTab.setPaper(rec.paper)
                     break
 
-            self.mainGUI.logTab.logView(rec.paper.title, rec.paper.authors, rec.paper.year, rec.paper.articleID)
+            if self.searchModeIdx.get() == Board.SEARCH_MODE_TITLE:
+                logSearchMode = self.mainGUI.logTab.TITLE_MODE
+            elif self.searchModeIdx.get() == Board.SEARCH_MODE_AUTHOR:
+                logSearchMode = self.mainGUI.logTab.AUTHOR_MODE
+            elif self.searchModeIdx.get() == Board.SEARCH_MODE_JOURNAL:
+                logSearchMode = self.mainGUI.logTab.JOURNAL_MODE
+            elif self.searchModeIdx.get() == Board.SEARCH_MODE_INSTITUTION:
+                logSearchMode = self.mainGUI.logTab.INSTITUTION_MODE
+
+            self.mainGUI.logTab.logView(rec.paper.title, rec.paper.authors, rec.paper.year, rec.paper.articleID,
+                self.searchStr.get(), logSearchMode                           
+            )
 
         def onCompletion(result):
             self.onLoaded()
