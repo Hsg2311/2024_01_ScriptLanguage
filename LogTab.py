@@ -4,12 +4,15 @@ from tkinter import messagebox
 import GuiConfig
 import os
 import spam
+from board import Board
+from Loading import Loading
 
 class LogTxt:
-    def __init__(self, master, frame, txt):
+    def __init__(self, master, frame, txt, idx):
         self.master = master
         self.frame = frame
         self.txt = txt
+        self.idx = idx
         
         self.widget = Text(self.frame, height=1, wrap=WORD,
             width=GuiConfig.LOG_LOG_TEXT_WIDTH,
@@ -33,6 +36,9 @@ class LogTxt:
     
     def onFocusOut(self, event):
         self.widget.config(bg='white', fg='black')
+
+    def owns(self, widget):
+        return self.widget == widget
 
 class LogTab:
     TITLE_MODE = "Title"
@@ -113,14 +119,16 @@ class LogTab:
     def logSearch(self, searchStr, searchMode):
         spam.logSearch(searchStr, searchMode)
         self.searchLogTxts.append( LogTxt(self.master, self.searchLogFrame,
-            self.__searchLogToStr( spam.getSearchLog(spam.searchLogSize() - 1) )
+            self.__searchLogToStr( spam.getSearchLog(spam.searchLogSize() - 1) ),
+            spam.searchLogSize() - 1
         ) )
         self.adjustScrollbar()
 
     def logView(self, title, authors, year, artiID):
         spam.logView(title, ', '.join(authors), int(year), artiID)
         self.viewLogTxts.append( LogTxt(self.master, self.viewLogFrame,
-            self.__viewLogToStr( spam.getViewLog(spam.viewLogSize() - 1) )
+            self.__viewLogToStr( spam.getViewLog(spam.viewLogSize() - 1) ),
+            spam.viewLogSize() - 1
         ) )
         self.adjustScrollbar()
 
@@ -130,7 +138,7 @@ class LogTab:
 
         for i in range(spam.searchLogSize()):
             self.searchLogTxts.append( LogTxt(self.master, self.searchLogFrame,
-                self.__searchLogToStr( spam.getSearchLog(i) )
+                self.__searchLogToStr( spam.getSearchLog(i) ), i
             ) )
         self.adjustScrollbar()
             
@@ -141,7 +149,7 @@ class LogTab:
 
         for i in range(spam.viewLogSize()):
             self.viewLogTxts.append( LogTxt(self.master, self.viewLogFrame,
-                self.__viewLogToStr( spam.getViewLog(i) )
+                self.__viewLogToStr( spam.getViewLog(i) ), i
             ) )
         self.adjustScrollbar()
 
@@ -168,4 +176,46 @@ class LogTab:
 
 
     def click(self):
-        messagebox.showinfo("Log Tab", "You clicked the button in the Log Tab")
+        selected = self.frame.focus_get()
+        if selected is None:
+            return
+        
+        for log in self.searchLogTxts:
+            if log.owns(selected):
+                response = spam.getSearchLog(log.idx)
+                keyword = response['keyword']
+                searchMode = response['type']
+
+                self.mainGUI.searchTab.searchStr.set(keyword)
+
+                if searchMode == LogTab.TITLE_MODE:
+                    self.mainGUI.searchTab.searchModeIdx.set(Board.SEARCH_MODE_TITLE)
+                elif searchMode == LogTab.AUTHOR_MODE:
+                    self.mainGUI.searchTab.searchModeIdx.set(Board.SEARCH_MODE_AUTHOR)
+                elif searchMode == LogTab.JOURNAL_MODE:
+                    self.mainGUI.searchTab.searchModeIdx.set(Board.SEARCH_MODE_JOURNAL)
+                elif searchMode == LogTab.INSTITUTION_MODE:
+                    self.mainGUI.searchTab.searchModeIdx.set(Board.SEARCH_MODE_INSTITUTION)
+                
+                self.mainGUI.searchTab.search()
+                self.mainGUI.notebook.select(self.mainGUI.searchTab.frame)
+                break
+
+        for log in self.viewLogTxts:
+            if log.owns(selected):
+                response = spam.getViewLog(log.idx)
+                artiID = response['artiID']
+                # searchStr = response['title']
+                # searchMode = response['author']
+
+                def task():
+                    # get paper info by xml parsing
+                    # set paper
+                    pass
+
+                def onCompletion(result):
+                    self.mainGUI.viewTab.show(self)
+
+                Loading(self.master, task, onCompletion)
+
+                break
