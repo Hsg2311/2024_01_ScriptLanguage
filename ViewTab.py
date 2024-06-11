@@ -76,6 +76,9 @@ class ViewTab:
         tTitle.grid(row=0, column=0, sticky='nsew')
 
         # row 1 - abstract
+        if self.paper.abstract is None:
+            self.paper.abstract = '논문 초록 정보가 제공되지 않습니다.'
+
         tAbstract = create_text_widget(
             self.paperFrame, GuiConfig.cFont, self.paper.abstract, 6
         )

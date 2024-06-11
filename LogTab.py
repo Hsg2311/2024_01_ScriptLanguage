@@ -7,6 +7,10 @@ import spam
 from board import Board
 from Loading import Loading
 
+from xmlParsing import PageParser
+from xmlParsing import DetailParser
+from paper import Paper
+
 class LogTxt:
     def __init__(self, master, frame, txt, idx):
         self.master = master
@@ -205,13 +209,37 @@ class LogTab:
             if log.owns(selected):
                 response = spam.getViewLog(log.idx)
                 artiID = response['artiID']
-                # searchStr = response['title']
-                # searchMode = response['author']
+                keyword = response['keyword']
+                type = response['type']
+
+                if type == LogTab.TITLE_MODE:
+                    searchMode = PageParser.TITLE_MODE
+                elif type == LogTab.AUTHOR_MODE:
+                    searchMode = PageParser.AUTHOR_MODE
+                elif type == LogTab.JOURNAL_MODE:
+                    searchMode = PageParser.JOURNAL_MODE
+                elif type == LogTab.INSTITUTION_MODE:
+                    searchMode = PageParser.INSTITUTION_MODE
+                else:
+                    raise ValueError('invalid search mode')
 
                 def task():
-                    # get paper info by xml parsing
-                    # set paper
-                    pass
+                    paper = Paper()
+
+                    i = 1
+                    found = False
+                    while not found:
+                        results = PageParser(keyword, searchMode, i, Board.SEARCH_UNIT).searchAndParse()
+
+                        for result in results:
+                            if result.articleID == artiID:
+                                result.reflect(paper)
+                                found = True
+                                break
+                    
+                    DetailParser(paper.articleID).searchAndParse().reflect(paper)
+                    self.mainGUI.viewTab.setPaper(paper)
+                    self.logView(paper.title, paper.authors, paper.year, paper.articleID, keyword, type)
 
                 def onCompletion(result):
                     self.mainGUI.viewTab.show(self)
