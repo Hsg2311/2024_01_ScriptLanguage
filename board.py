@@ -15,17 +15,20 @@ class Board:
     SEARCH_MODE_AUTHOR = 1
     SEARCH_MODE_JOURNAL = 2
     SEARCH_MODE_INSTITUTION = 3
+    SEARCH_SOURCE_KCI = PageParser.KCI
+    SEARCH_SOURCE_SCOPUS = PageParser.SCOPUS
 
     def __init__(self):
         self.papers = []
         self.pageNum = 1
         self.searchStr = ''
         self.searchMode = Board.SEARCH_MODE_TITLE
+        self.searchSource = Board.SEARCH_SOURCE_KCI
 
-    def search(self, searchStr, searchMode=SEARCH_MODE_TITLE):
+    def search(self, searchStr, searchMode=SEARCH_MODE_TITLE, src=SEARCH_SOURCE_KCI):
         self.papers = []
         self.searchRange(searchStr, searchMode, 0,
-            Board.PAGE_CNT_IN_A_SEARCH * Board.RECORD_CNT_IN_A_PAGE - 1
+            Board.PAGE_CNT_IN_A_SEARCH * Board.RECORD_CNT_IN_A_PAGE - 1, src
         )
         self.pageNum = 1
 
@@ -34,7 +37,7 @@ class Board:
 
     # [start, end] is an 0-based inclusive range of indices
     # remote page referes to the XML's page
-    def searchRange(self, searchStr, searchMode, start, end):
+    def searchRange(self, searchStr, searchMode, start, end, src):
         self.searchStr = searchStr
         self.searchMode = searchMode
 
@@ -53,7 +56,7 @@ class Board:
             raise ValueError('invalid search mode')
 
         parseResults = PageParser( searchStr, searchMode, remotePageStart,
-            Board.SEARCH_UNIT * (remotePageEnd - remotePageStart + 1)
+            Board.SEARCH_UNIT * (remotePageEnd - remotePageStart + 1), src
         ).searchAndParse()
 
         for parseResult in parseResults:
@@ -66,7 +69,8 @@ class Board:
     def nextPage(self):
         if self.pageNum % Board.PAGE_CNT_IN_A_SEARCH == 0:
             self.searchRange(self.searchStr, self.searchMode, self.pageNum * Board.RECORD_CNT_IN_A_PAGE,
-                (self.pageNum + Board.PAGE_CNT_IN_A_SEARCH) * Board.RECORD_CNT_IN_A_PAGE - 1
+                (self.pageNum + Board.PAGE_CNT_IN_A_SEARCH) * Board.RECORD_CNT_IN_A_PAGE - 1,
+                self.searchSource
             )
 
         if self.length() <= self.pageNum * Board.RECORD_CNT_IN_A_PAGE:

@@ -135,7 +135,13 @@ class SearchTab:
         def task():
             self.mainGUI.logTab.logSearch(self.searchStr.get(), logSearchMode)
             self.onLoading()
-            self.board.search(self.searchStr.get(), self.searchModeIdx.get())
+
+            if self.sourceIdx.get() == 0:
+                src = Board.SEARCH_SOURCE_KCI
+            else:
+                src = Board.SEARCH_SOURCE_SCOPUS
+
+            self.board.search(self.searchStr.get(), self.searchModeIdx.get(), src)
             self.trayBasePage = 1
 
         def onCompletion(result):
