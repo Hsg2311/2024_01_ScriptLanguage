@@ -133,7 +133,12 @@ class SearchTab:
             logSearchMode = self.mainGUI.logTab.INSTITUTION_MODE
 
         def task():
-            self.mainGUI.logTab.logSearch(self.searchStr.get(), logSearchMode)
+            if self.sourceIdx.get() == 0:
+                src = Board.SEARCH_SOURCE_KCI
+            else:
+                src = Board.SEARCH_SOURCE_SCOPUS
+
+            self.mainGUI.logTab.logSearch(self.searchStr.get(), logSearchMode, src)
             self.onLoading()
 
             if self.sourceIdx.get() == 0:
@@ -250,9 +255,16 @@ class SearchTab:
                 logSearchMode = self.mainGUI.logTab.JOURNAL_MODE
             elif self.searchModeIdx.get() == Board.SEARCH_MODE_INSTITUTION:
                 logSearchMode = self.mainGUI.logTab.INSTITUTION_MODE
+            else:
+                raise ValueError("Invalid search mode")
+
+            if self.sourceIdx.get() == 0:
+                src = Board.SEARCH_SOURCE_KCI
+            else:
+                src = Board.SEARCH_SOURCE_SCOPUS
 
             self.mainGUI.logTab.logView(rec.paper.title, rec.paper.authors, rec.paper.year, rec.paper.articleID,
-                self.searchStr.get(), logSearchMode                           
+                self.searchStr.get(), logSearchMode, src
             )
 
         def onCompletion(result):

@@ -120,16 +120,16 @@ class LogTab:
     def __viewLogToStr(self, log):
         return log['timeStamp'] + '| ' + log['author'] + ' | ' + str(log['year']) + ' | ' + log['title']
 
-    def logSearch(self, searchStr, searchMode):
-        spam.logSearch(searchStr, searchMode)
+    def logSearch(self, searchStr, searchMode, searchSource):
+        spam.logSearch(searchStr, searchMode, searchSource)
         self.searchLogTxts.append( LogTxt(self.master, self.searchLogFrame,
             self.__searchLogToStr( spam.getSearchLog(spam.searchLogSize() - 1) ),
             spam.searchLogSize() - 1
         ) )
         self.adjustScrollbar()
 
-    def logView(self, title, authors, year, artiID, searchStr, searchMode):
-        spam.logView(title, ', '.join(authors), int(year), artiID, searchStr, searchMode)
+    def logView(self, title, authors, year, artiID, searchStr, searchMode, searchSource):
+        spam.logView(title, ', '.join(authors), int(year), artiID, searchStr, searchMode, searchSource)
         self.viewLogTxts.append( LogTxt(self.master, self.viewLogFrame,
             self.__viewLogToStr( spam.getViewLog(spam.viewLogSize() - 1) ),
             spam.viewLogSize() - 1
@@ -189,6 +189,7 @@ class LogTab:
                 response = spam.getSearchLog(log.idx)
                 keyword = response['keyword']
                 searchMode = response['type']
+                searchSource = response['source']
 
                 self.mainGUI.searchTab.searchStr.set(keyword)
 
@@ -200,6 +201,11 @@ class LogTab:
                     self.mainGUI.searchTab.searchModeIdx.set(Board.SEARCH_MODE_JOURNAL)
                 elif searchMode == LogTab.INSTITUTION_MODE:
                     self.mainGUI.searchTab.searchModeIdx.set(Board.SEARCH_MODE_INSTITUTION)
+
+                if searchSource == Board.SEARCH_SOURCE_KCI:
+                    self.mainGUI.searchTab.sourceIdx.set(0)   # KCI
+                elif searchSource == Board.SEARCH_SOURCE_SCOPUS:
+                    self.mainGUI.searchTab.sourceIdx.set(1)   # SCOPUS
                 
                 self.mainGUI.searchTab.search()
                 self.mainGUI.notebook.select(self.mainGUI.searchTab.frame)
@@ -211,6 +217,7 @@ class LogTab:
                 artiID = response['artiID']
                 keyword = response['keyword']
                 type = response['type']
+                searchSource = response['source']
 
                 if type == LogTab.TITLE_MODE:
                     searchMode = PageParser.TITLE_MODE
@@ -229,7 +236,7 @@ class LogTab:
                     i = 1
                     found = False
                     while not found:
-                        results = PageParser(keyword, searchMode, i, Board.SEARCH_UNIT).searchAndParse()
+                        results = PageParser(keyword, searchMode, i, Board.SEARCH_UNIT, searchSource).searchAndParse()
 
                         for result in results:
                             if result.articleID == artiID:
@@ -237,9 +244,9 @@ class LogTab:
                                 found = True
                                 break
                     
-                    DetailParser(paper.articleID).searchAndParse().reflect(paper)
+                    DetailParser(paper.articleID, searchSource).searchAndParse().reflect(paper)
                     self.mainGUI.viewTab.setPaper(paper)
-                    self.logView(paper.title, paper.authors, paper.year, paper.articleID, keyword, type)
+                    self.logView(paper.title, paper.authors, paper.year, paper.articleID, keyword, type, searchSource)
 
                 def onCompletion(result):
                     self.mainGUI.viewTab.show(self)
