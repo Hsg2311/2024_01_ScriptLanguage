@@ -245,7 +245,7 @@ class LogTab:
                                 break
                     
                     DetailParser(paper.articleID, searchSource).searchAndParse().reflect(paper)
-                    self.mainGUI.viewTab.setPaper(paper)
+                    self.mainGUI.viewTab.setPaper(paper, searchSource)
                     self.logView(paper.title, paper.authors, paper.year, paper.articleID, keyword, type, searchSource)
 
                 def onCompletion(result):

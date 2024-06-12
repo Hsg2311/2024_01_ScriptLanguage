@@ -339,7 +339,8 @@ class ScopusPageParser:
         return self.__getItem(entry, 'dc:title')
     
     def __getAuthorNames(self, entry):
-        return self.__getItem(entry, 'dc:creator')
+        i = self.__getItem(entry, 'dc:creator')
+        return [i] if i is not None else None
     
     def __getPubYear(self, entry):
         return self.__getItem(entry, 'prism:coverDate')[:4]
@@ -364,7 +365,8 @@ class ScopusPageParser:
         return self.__getItem(entry, 'prism:issueIdentifier')
     
     def __getDOI(self, entry):
-        return self.__getItem(entry, 'prism:doi')
+        i = self.__getItem(entry, 'prism:doi')
+        return 'https://doi.org/' + i if i is not None else None
     
     def __getCitationCount(self, entry):
         return self.__getItem(entry, 'atom:citedby-count')
@@ -674,11 +676,6 @@ class ScopusDetailParser:
         return self.isearch(willCache)
     
     def parse(self):
-        refs = []
-        keywords = []
-        authorInsts = []
-        abstract = None
-
         root = ET.fromstring(self.__detail)
         coredata = root.find('dn:coredata', ScopusDetailParser.XML_NAMESPACES)
         keywords = self.__getKeywords(coredata)
@@ -705,13 +702,13 @@ class ScopusDetailParser:
         return tag.text if tag is not None else None
     
     def __getKeywords(self, item):
-        pass
+        return None
     
     def __getRefs(self, item):
-        pass
+        return None
     
     def __getAuthorInsts(self, item):
-        pass
+        return None
     
     def __getAbstract(self, item):
         return self.__getItem(item, 'dc:description')

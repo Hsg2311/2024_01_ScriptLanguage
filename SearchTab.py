@@ -244,7 +244,11 @@ class SearchTab:
             
             for rec in self.curRecords:
                 if rec.owns(item):
-                    self.mainGUI.viewTab.setPaper(rec.paper)
+                    if self.sourceIdx.get() == 0:
+                        src = Board.SEARCH_SOURCE_KCI
+                    else:
+                        src = Board.SEARCH_SOURCE_SCOPUS
+                    self.mainGUI.viewTab.setPaper(rec.paper, src)
                     break
 
             if self.searchModeIdx.get() == Board.SEARCH_MODE_TITLE:

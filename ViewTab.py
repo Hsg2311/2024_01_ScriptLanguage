@@ -175,11 +175,11 @@ class ViewTab:
         for widget in self.frame.winfo_children():
             widget.destroy()
 
-    def setPaper(self, paper):
+    def setPaper(self, paper, source):
         self.clear()
         self.paper = paper
         if self.paper.articleID is not None:
-            DetailParser(self.paper.articleID).searchAndParse().reflect(self.paper)
+            DetailParser(self.paper.articleID, source).searchAndParse().reflect(self.paper)
         self.initWidgets()
 
     def openDOI(self):
