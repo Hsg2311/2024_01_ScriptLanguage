@@ -176,7 +176,7 @@ class ViewTab:
         for widget in self.frame.winfo_children():
             widget.destroy()
 
-    def setPaper(self, paper, source):
+    def setPaper(self, paper, source='KCI'):
         self.clear()
         self.paper = paper
         if self.paper.articleID is not None:
@@ -297,16 +297,13 @@ class CiteDialog:
         self.frame.destroy()
 
     def makeAPACitation(self):
-        return self.paper.author + ' (' + self.paper.year + '). ' + self.paper.title
-        # return self.paper.author + ' (' + self.paper.year + '). ' + self.paper.title + '. ' + self.paper.journal + ', ' + self.paper.volume + '(' + self.paper.issue + '), ' + self.paper.pages + '.'
+        return ', '.join(self.paper.authors) + ' (' + self.paper.year + '). ' + self.paper.title + '. ' + self.paper.journal + ', ' + self.paper.volume + '(' + self.paper.issue + '), ' + self.paper.fPage + '-' + self.paper.lPage + '.'
 
     def makeMLACitation(self):
-        return self.paper.author + '. "' + self.paper.title + '." (' + self.paper.year + ')'
-        # return self.paper.author + '. "' + self.paper.title + '." ' + self.paper.journal + ' ' + self.paper.volume + '.' + self.paper.issue + ' (' + self.paper.year + '): ' + self.paper.pages + '.'
+        return ', '.join(self.paper.authors) + '. "' + self.paper.title + '." ' + self.paper.journal + ' ' + self.paper.volume + '.' + self.paper.issue + ' (' + self.paper.year + '): ' + self.paper.fPage + '-' + self.paper.lPage + '.'
 
     def makeChicagoCitation(self):
-        return self.paper.author + '. "' + self.paper.title + '." (' + self.paper.year + ')'
-        # return self.paper.author + '. "' + self.paper.title + '." ' + self.paper.journal + ' ' + self.paper.volume + ', no. ' + self.paper.issue + ' (' + self.paper.year + '): ' + self.paper.pages + '.'
+        return ', '.join(self.paper.authors) + '. "' + self.paper.title + '." ' + self.paper.journal + ' ' + self.paper.volume + ', no. ' + self.paper.issue + ' (' + self.paper.year + '): ' + self.paper.fPage + '-' + self.paper.lPage + '.'
 
 class MapWindow:
     def __init__(self, master, paper):

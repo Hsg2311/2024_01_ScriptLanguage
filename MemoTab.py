@@ -55,7 +55,7 @@ class MemoTab:
         self.frame = Frame(self.master)
         self.frame.pack()
         self.canvas = Canvas(self.frame)
-        self.canvas.place(x=10, y=10, width=680, height=580)
+        self.canvas.place(x=10, y=10, width=640, height=580)
         self.grids = Frame(self.canvas)
         self.grids.pack(fill=BOTH, expand=True)
 
