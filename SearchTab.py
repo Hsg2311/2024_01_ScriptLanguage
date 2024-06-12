@@ -91,6 +91,10 @@ class SearchTab:
             anchor=NW
         )
 
+        self.resultListBgImg = PhotoImage(file='res/bg_image.png')
+        self.labelBgImg = Label(self.resultList, image=self.resultListBgImg)
+        self.labelBgImg.pack()
+
         self.pageTray = Frame(self.result)
         self.pageTray.place( x=(GuiConfig.SEARCH_RESULT_WIDTH - GuiConfig.SEARCH_RESULT_TRAY_WIDTH) // 2,
             y=GuiConfig.SEARCH_RESULT_HEIGHT + GuiConfig.SEARCH_RESULT_TRAY_PADDINGY,
@@ -172,6 +176,8 @@ class SearchTab:
             self.trayBasePage = 1
 
         def onCompletion(result):
+            self.labelBgImg.destroy()
+
             self.onLoaded()
             self.update()
 
