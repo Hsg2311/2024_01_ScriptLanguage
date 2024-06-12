@@ -7,6 +7,7 @@ from xmlParsing import DetailParser
 from tkintermapview import TkinterMapView
 import requests
 from Loading import Loading
+from translate import translate_text
 import papery
 
 class ViewTab:
@@ -83,14 +84,14 @@ class ViewTab:
         if self.paper.abstract is None:
             self.paper.abstract = '논문 초록 정보가 제공되지 않습니다.'
 
-        tAbstract = create_text_widget(
+        self.tAbstract = create_text_widget(
             self.paperFrame, GuiConfig.cFont, self.paper.abstract, 6
         )
-        tAbstract.grid(row=1, column=0, sticky='nsew')
+        self.tAbstract.grid(row=1, column=0, sticky='nsew')
 
-        abstractScroll = Scrollbar(self.paperFrame, command=tAbstract.yview, orient=VERTICAL)
+        abstractScroll = Scrollbar(self.paperFrame, command=self.tAbstract.yview, orient=VERTICAL)
         abstractScroll.grid(row=1, column=1, sticky='ns')
-        tAbstract.config(yscrollcommand=abstractScroll.set)
+        self.tAbstract.config(yscrollcommand=abstractScroll.set)
 
         # row 2 - reference header (using Text for word wrap and center alignment)
         tReferenceHeader = create_centered_text_widget(
@@ -195,7 +196,12 @@ class ViewTab:
             messagebox.showinfo("DOI", "DOI 혹은 URL 정보가 제공되지 않았습니다.")
 
     def translate(self):
-        pass
+        self.tAbstract['state'] = 'normal'
+
+        self.tAbstract.delete('1.0', END)
+        self.tAbstract.insert(END, translate_text(self.paper.abstract, 'ko'))
+
+        self.tAbstract['state'] = 'disabled'
 
     def memo(self):
         if self.paper is None:
