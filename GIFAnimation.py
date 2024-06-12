@@ -3,8 +3,8 @@ import PIL.ImageTk
 import PIL.ImageSequence
 
 class GIFAnimation:
-    def __init__(self, w, h):  
-        src = PIL.Image.open('res/richard.gif')
+    def __init__(self, path, w, h):  
+        src = PIL.Image.open(path)
 
         frames = []
         disposal = []

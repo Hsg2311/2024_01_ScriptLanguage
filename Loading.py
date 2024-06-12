@@ -5,7 +5,7 @@ import GuiConfig
 
 class Loading:
     def initGif():
-        Loading.gif = GIFAnimation(364, 248)
+        Loading.gif = GIFAnimation('res/richard.gif', 364, 248)
 
     def __init__(self, master, task, callback):
         self.master = master

@@ -3,7 +3,7 @@ from tkinter import font
 #Common
 WIDTH = 800
 HEIGHT = 600
-GIF_WIDTH = 60
+GIF_WIDTH = 150
 GIF_HEIGHT = 30
 GIF_PADDINGX = 20
 GIF_PADDINGY = 10

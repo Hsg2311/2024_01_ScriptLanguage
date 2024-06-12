@@ -45,7 +45,7 @@ class MainGUI:
 
         self.notebook.hide(self.viewTab.frame)
 
-        self.gif = GIFAnimation(GuiConfig.GIF_WIDTH, GuiConfig.GIF_HEIGHT)
+        self.gif = GIFAnimation('res/PaperPlane.gif', GuiConfig.GIF_WIDTH, GuiConfig.GIF_HEIGHT)
         self.gifLabel = Label(self.master, image=self.gif.image())
         self.gifLabel.place(
             x=GuiConfig.WIDTH - GuiConfig.GIF_PADDINGX, y=GuiConfig.GIF_PADDINGY,
