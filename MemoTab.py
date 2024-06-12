@@ -5,6 +5,9 @@ from tkinter import scrolledtext
 from xml.dom import minidom
 
 import GuiConfig
+import papery
+from save import SaveCollector
+import telepot
 
 # smtp 정보
 host = "smtp.gmail.com" # Gmail SMTP 서버 주소.
@@ -46,8 +49,8 @@ class MemoTab:
 
     def __init__(self, mainGUI):
         self.mainGUI = mainGUI
+        self.mainGUI.saveCollector.add_saver(self)
         self.master = mainGUI.master
-        self.master.protocol("WM_DELETE_WINDOW", self.onClosing)
 
         self.frame = Frame(self.master)
         self.frame.pack()
@@ -69,20 +72,20 @@ class MemoTab:
         self.loadXML()
 
         self.addButton = Button(self.frame, text="+", command=self.addMemo)
-        self.addButton.place(x=700, y=40, width=60, height=50)
+        self.addButton.place(x=660, y=40, width=60, height=50)
 
         self.delButton = Button(self.frame, text="-", command=self.delMemo)
-        self.delButton.place(x=700, y=90, width=60, height=50)
+        self.delButton.place(x=660, y=90, width=60, height=50)
 
         self.mailButton = Button(self.frame, command=self.mail, image=self.gmailIcon)
-        self.mailButton.place(x=700, y=200, width=60, height=50)
+        self.mailButton.place(x=660, y=200, width=60, height=50)
 
         self.sendButton = Button(self.frame, command=self.send, image=self.telegramIcon)
-        self.sendButton.place(x=700, y=260, width=60, height=50)
+        self.sendButton.place(x=660, y=260, width=60, height=50)
 
     def loadXML(self):
         try:
-            doc = minidom.parse("memo.xml")
+            doc = minidom.parse(papery.CACHE_PREFIX + "memo.xml")
             memos = doc.getElementsByTagName("memo")
             for i, memo in enumerate(memos):
                 text = memo.firstChild.nodeValue
@@ -96,7 +99,7 @@ class MemoTab:
         except:
             pass
 
-    def onClosing(self):
+    def save(self):
         for memo in self.memos:
             memo.update()
 
@@ -110,9 +113,9 @@ class MemoTab:
             memoElement.appendChild(saveDoc.createTextNode(memo.text))
             memosElement.appendChild(memoElement)
 
-        print(saveDoc.toprettyxml(), file=open("memo.xml", "w", encoding="utf-8"))
-
-        self.master.destroy()
+        print( saveDoc.toprettyxml(),
+            file=open(papery.CACHE_PREFIX + "memo.xml", "w", encoding="utf-8")
+        )
 
     def addMemo(self, text=''):
         self.memos.append(Memo(self.grids, text))
@@ -179,7 +182,23 @@ class MemoTab:
         MailDialog(toMail, self.master)
 
     def send(self):
-        pass
+        bot = telepot.Bot(papery.TELEGRAM_BOT_TOKEN)
+        toSendWidget = self.grids.focus_get()
+
+        toSend = None
+        for memo in self.memos:
+            if memo.owns(toSendWidget):
+                toSend = memo
+                break
+
+        if toSend == None:
+            messagebox.showinfo("Telegram", "Select a memo to send")
+            return
+        
+        toSend.update()
+        bot.sendMessage(papery.TELEGRAM_CHAT_ID, toSend.text)
+
+        messagebox.showinfo("Telegram", "Message sent")
 
 import mysmtplib
 from email.mime.multipart import MIMEMultipart

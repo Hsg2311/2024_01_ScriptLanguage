@@ -3,6 +3,11 @@ from tkinter import messagebox
 import GuiConfig
 import webbrowser
 from summary import Summarizer
+from xmlParsing import DetailParser
+from tkintermapview import TkinterMapView
+import requests
+from Loading import Loading
+import papery
 
 class ViewTab:
     def __init__(self, mainGUI):
@@ -46,8 +51,7 @@ class ViewTab:
 
         # Create a tag for center alignment
         def create_centered_text_widget(parent, font, content, height, bg='white'):
-            frame = Frame(parent)
-            text_widget = Text(frame, font=font, wrap=WORD,
+            text_widget = Text(parent, font=font, wrap=WORD,
                 width=GuiConfig.VIEW_PAPER_WIDTH, height=height, bg=bg
             )
             text_widget.tag_configure("center", justify='center')
@@ -55,16 +59,20 @@ class ViewTab:
             text_widget.tag_add("center", "1.0", "end")
             text_widget.configure(state='disabled')  # Make it read-only
 
-            # Place the text widget in the center of the frame
-            text_widget.grid(row=0, column=0, sticky='nsew')
-            frame.rowconfigure(0, weight=1)
-            frame.columnconfigure(0, weight=1)
+            return text_widget
+        
+        def create_text_widget(parent, font, content, height, bg='white'):
+            text_widget = Text(parent, font=font, wrap=WORD,
+                width=GuiConfig.VIEW_PAPER_WIDTH, height=height, bg=bg
+            )
+            text_widget.insert(END, content)
+            text_widget.configure(state='disabled')
 
-            return frame
+            return text_widget
 
         # row 0 - title
         titleStr = self.paper.title + '\n' + ' | '.join(
-            [self.paper.author, self.paper.year]
+            [', '.join( self.paper.authors ), self.paper.year]
         )
         tTitle = create_centered_text_widget(
             self.paperFrame, GuiConfig.paperTitleFont, titleStr, 2
@@ -72,21 +80,33 @@ class ViewTab:
         tTitle.grid(row=0, column=0, sticky='nsew')
 
         # row 1 - abstract
-        tAbstract = create_centered_text_widget(
+        if self.paper.abstract is None:
+            self.paper.abstract = '논문 초록 정보가 제공되지 않습니다.'
+
+        tAbstract = create_text_widget(
             self.paperFrame, GuiConfig.cFont, self.paper.abstract, 6
         )
         tAbstract.grid(row=1, column=0, sticky='nsew')
 
+        abstractScroll = Scrollbar(self.paperFrame, command=tAbstract.yview, orient=VERTICAL)
+        abstractScroll.grid(row=1, column=1, sticky='ns')
+        tAbstract.config(yscrollcommand=abstractScroll.set)
+
         # row 2 - reference header (using Text for word wrap and center alignment)
         tReferenceHeader = create_centered_text_widget(
-            self.paperFrame, GuiConfig.headFont, "관련 논문", 1, '#dbdfdf'
+            self.paperFrame, GuiConfig.headFont, "참조 논문", 1, '#dbdfdf'
         )
         tReferenceHeader.grid(row=2, column=0, sticky='nsew')
 
         # row 3 - reference list
-        reference_text = '현재 관련 논문 기능은 구현되어있지 않습니다.\n(참고 문헌 또는 피인용 논문 고려 구현 예정)'
-        tReference = create_centered_text_widget(self.paperFrame, GuiConfig.cFont, reference_text, 3)
+        reference_text = '\n'.join(self.paper.refs) if self.paper.refs is not None \
+            else '참조 논문 정보가 제공되지 않습니다.'
+        tReference = create_text_widget(self.paperFrame, GuiConfig.refFont, reference_text, 3)
         tReference.grid(row=3, column=0, sticky='nsew')
+
+        referenceScroll = Scrollbar(self.paperFrame, command=tReference.yview, orient=VERTICAL)
+        referenceScroll.grid(row=3, column=1, sticky='ns')
+        tReference.config(yscrollcommand=referenceScroll.set)
 
         self.paperFrame.rowconfigure(0, weight=2)
         self.paperFrame.rowconfigure(1, weight=6)
@@ -138,6 +158,12 @@ class ViewTab:
         ) )
         self.buttons[-1].grid(row=6, column=0, sticky='nsew', pady=GuiConfig.WIDGET_INTERVALY // 2)
 
+        # row 7 - map button
+        self.buttons.append( Button(self.buttonsFrame, text="지도",
+            font=GuiConfig.cFont, command=self.map
+        ) )
+        self.buttons[-1].grid(row=7, column=0, sticky='nsew', pady=GuiConfig.WIDGET_INTERVALY // 2)
+
         for i in range(len(self.buttons)):
             self.buttonsFrame.rowconfigure(i, weight=1)
         self.buttonsFrame.columnconfigure(0, weight=1)
@@ -152,6 +178,8 @@ class ViewTab:
     def setPaper(self, paper):
         self.clear()
         self.paper = paper
+        if self.paper.articleID is not None:
+            DetailParser(self.paper.articleID).searchAndParse().reflect(self.paper)
         self.initWidgets()
 
     def openDOI(self):
@@ -177,7 +205,7 @@ class ViewTab:
         self.paper.setHasMemo()
 
         memoStr='\n\n[Paper] ' + ' | '.join(
-            [self.paper.title, self.paper.author, self.paper.year]
+            [self.paper.title, ', '.join(self.paper.authors), self.paper.year]
         )
 
         self.mainGUI.memoTab.addMemo(memoStr)
@@ -199,6 +227,19 @@ class ViewTab:
 
     def bookmark(self):
         pass
+
+    def map(self):
+        if self.paper is None:
+            messagebox.showinfo("지도", "지도에 표시할 논문이 없습니다.")
+            return
+
+        def task():
+            MapWindow(self.master, self.paper)
+
+        def onCompletion(result):
+            pass
+
+        Loading(self.master, task, onCompletion)
 
 import clipboard
 
@@ -254,3 +295,67 @@ class CiteDialog:
     def makeChicagoCitation(self):
         return self.paper.author + '. "' + self.paper.title + '." (' + self.paper.year + ')'
         # return self.paper.author + '. "' + self.paper.title + '." ' + self.paper.journal + ' ' + self.paper.volume + ', no. ' + self.paper.issue + ' (' + self.paper.year + '): ' + self.paper.pages + '.'
+
+class MapWindow:
+    def __init__(self, master, paper):
+        self.master = master
+        self.paper = paper
+
+        self.frame = Toplevel(master)
+        self.frame.title("지도")
+        self.frame.geometry("600x400")
+        self.frame.resizable(False, False)
+
+        self.gmap_widget = TkinterMapView(self.frame, width=600, height=400)
+        self.gmap_widget.pack(fill=BOTH)
+
+        self.gmap_widget.set_tile_server(
+            "https://mt0.google.com/vt/lyrs=m&hl=kr&x={x}&y={y}&z={z}&s=Ga", max_zoom=22
+        )
+
+        insti = self.paper.authors[0][self.paper.authors[0].find('('):]
+        if insti == self.paper.authors[0][-1]:
+            insti = None
+        else:
+            insti = insti[1:-1]
+
+        if insti is None:
+            self.marker = self.gmap_widget.set_position(0, 0, marker=True)
+            self.marker.set_text("기관 정보가 제공되지 않습니다.")
+        else:
+            self.marker = self.gmap_widget.set_address(insti, marker=True)
+            if self.marker is not False:
+                self.marker.set_text(insti)
+            else:
+                lat, lng = self.get_lat_lng(insti, papery.KAKAO_MAP_API_KEY)
+                if lat is not None and lng is not None:
+                    self.marker = self.gmap_widget.set_position(lat, lng, marker=True)
+                    self.marker.set_text(insti)
+                else:
+                    self.marker = self.gmap_widget.set_position(0, 0, marker=True)
+                    self.marker.set_text("위치 정보를 찾을 수 없습니다.")
+
+        self.gmap_widget.set_zoom(16)
+
+    def get_lat_lng(self, address, api_key):
+        url = 'https://dapi.kakao.com/v2/local/search/address.json'
+        headers = {
+            'Authorization': f'KakaoAK {api_key}'
+        }
+        params = {
+            'query': address
+        }
+        
+        response = requests.get(url, headers=headers, params=params)
+        
+        if response.status_code == 200:
+            result = response.json()
+            if result['documents']:
+                address_info = result['documents'][0]
+                lat = address_info['y']
+                lng = address_info['x']
+                return lat, lng
+            else:
+                return None, None
+        else:
+            raise Exception(f"Error {response.status_code}: {response.text}")

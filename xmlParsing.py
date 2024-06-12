@@ -1,125 +1,824 @@
+import pybliometrics.scopus
 import papery
 from paper import Paper
 import xml.etree.ElementTree as ET
 import requests
 import os
 
-class xmlParsing:
-    def __init__(self, apiKey, searchStr, paperDataURL, basePage, parseCnt):
-        self.papers = []
-        self.searchStr = searchStr
-        self.key = apiKey
-        self.paperDataURL = paperDataURL
-        self.basePage = basePage
-        self.cnt = parseCnt
-        self.roots = []
+import pybliometrics
+from pybliometrics.scopus import ScopusSearch
 
-    def printPapers(self, file=None):
-        for paper in self.papers:
-            print('Year :', paper.year, file=file)
-            print('Title :', paper.title, file=file)
-            print('Author :', paper.author, file=file)
-            print('Abstract :', paper.abstract, file=file)
-            print('DOI :', paper.doi if paper.doi is not None else 'DOI 정보가 없습니다.', file=file)
-            print('URL :', paper.url if paper.url is not None else 'URL 정보가 없습니다.', file=file)
-            print('Citation Count :', paper.citationCnt, file=file)
-            print(file=file)
+class KCIPageParser:
+    TITLE_MODE = 0
+    AUTHOR_MODE = 1
+    JOURNAL_MODE = 2
+    INSTITUTION_MODE = 3
+    PAGE_SIZE = 100
 
-    def parseFromXMLFile(self, xmlFile):
-        i = 0
+    def __init__(self, searchStr, searchMode, basePage, parseCnt):
+        self.__searchStr = searchStr
+        self.__searchMode = searchMode
+        self.__basePage = basePage
+        self.__key = papery.KCI_KEY
+        self.__paperDataURL = papery.KCI_PAPER_DATA_URL
+        self.__pages = []
+        self.results = []
+        self.__cnt = parseCnt
+
+    # short for file search
+    # expect the file to be named as @.xml#
+    # where @ is the search string and # is the page number
+    def fsearch(self):
+        i = self.__basePage
         while True:
-            file_path = xmlFile + str(i)
+            if self.__searchMode == self.TITLE_MODE:
+                file_path = papery.CACHE_PREFIX + 'kci/title/' + self.__searchStr + '.xml' + str(i)
+            elif self.__searchMode == self.AUTHOR_MODE:
+                file_path = papery.CACHE_PREFIX + 'kci/author/' + self.__searchStr + '.xml' + str(i)
+            elif self.__searchMode == self.JOURNAL_MODE:
+                file_path = papery.CACHE_PREFIX + 'kci/journal/' + self.__searchStr + '.xml' + str(i)
+            elif self.__searchMode == self.INSTITUTION_MODE:
+                file_path = papery.CACHE_PREFIX + 'kci/institution/' + self.__searchStr + '.xml' + str(i)
+            else:
+                raise ValueError('Invalid search mode')
 
             if os.path.isfile(file_path):
-                self.parseFromXMLStr(open(file_path, 'r', encoding='utf-8').read())
+                self.__pages.append( open(file_path, 'r', encoding='utf-8').read() )
             else:
                 break
 
             i += 1
 
-    def parseFromXMLStr(self, xmlStr, buildNewRoot=True):
-        root = ET.fromstring(xmlStr)
-        if buildNewRoot:
-            self.roots.clear()
-        self.roots.append(root)
+        return self.__pages if len(self.__pages) > 0 else None
 
-        for item in root.iter('record'):
-            jour = item.find('journalInfo')
-            arti = item.find('articleInfo')
+    # short for internet search
+    def isearch(self, willCache=True):
+        for i in range(0, self.__cnt // KCIPageParser.PAGE_SIZE):
+            params = {'key' : self.__key, 'apiCode' : 'articleSearch',
+                'page' : self.__basePage + i, 'displayCount' : KCIPageParser.PAGE_SIZE          
+            }
 
-            self.papers.append( Paper(
-                title=self.getTitle(arti),
-                author=', '.join( self.getAuthor(arti) ),
-                year=self.getPubYear(jour),
-                school='',
-                doi=self.getDOI(arti),
-                url=self.getURL(arti),
-                abstract=self.getAbstract(arti),
-                citationCnt=self.getCitationCount(arti)
-            ) )
+            if self.__searchMode == self.TITLE_MODE:
+                params['title'] = self.__searchStr
+            elif self.__searchMode == self.AUTHOR_MODE:
+                params['author'] = self.__searchStr
+            elif self.__searchMode == self.JOURNAL_MODE:
+                params['journal'] = self.__searchStr
+            elif self.__searchMode == self.INSTITUTION_MODE:
+                params['institution'] = self.__searchStr
+            else:
+                raise ValueError('Invalid search mode')
+            
+            self.__pages.append(
+                 requests.get(self.__paperDataURL, params=params).text
+            )
+        
+        if not willCache:
+            return self.__pages
+        
+        for i, xml in enumerate(self.__pages):
+            if self.__searchMode == self.TITLE_MODE:
+                path = papery.CACHE_PREFIX + 'kci/title/' + self.__searchStr + '.xml' + str(i + self.__basePage)
+            elif self.__searchMode == self.AUTHOR_MODE:
+                path = papery.CACHE_PREFIX + 'kci/author/' + self.__searchStr + '.xml' + str(i + self.__basePage)
+            elif self.__searchMode == self.JOURNAL_MODE:
+                path = papery.CACHE_PREFIX + 'kci/journal/' + self.__searchStr + '.xml' + str(i + self.__basePage)
+            elif self.__searchMode == self.INSTITUTION_MODE:
+                path = papery.CACHE_PREFIX + 'kci/institution/' + self.__searchStr + '.xml' + str(i + self.__basePage)
+            else:
+                raise ValueError('Invalid search mode')
+
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write(xml)
+
+        return self.__pages
+    
+    def search(self, willCache=True):
+        fResult = self.fsearch()
+        if fResult is not None:
+            return fResult
+        
+        return self.isearch(willCache)
+    
+    def isearchAndParse(self, willCache=True):
+        self.isearch(willCache)
+        return self.parse()
+
+    def fsearchAndParse(self):
+        self.fsearch()
+        return self.parse()
+    
+    def searchAndParse(self, willCache=True):
+        self.search(willCache)
+        return self.parse()
 
     def parse(self):
-        for i in range(0, self.cnt // 100):
-            paperDataParams = {'key' : self.key, 'apiCode' : 'articleSearch',
-                'title' : self.searchStr, 'page' : i + self.basePage,
-                'displayCount' : 100
-            }
-            response = requests.get(self.paperDataURL, params=paperDataParams)
-            self.parseFromXMLStr( response.text, False )
+        for page in self.__pages:
+            root = ET.fromstring(page)
 
-    def printAsXML(self, file=None):
-        for i, root in enumerate(self.roots):
-            print( ET.tostring(root, encoding='utf8').decode('utf8'),
-                file=open(file+str(i), 'w', encoding='utf-8') if file is not None else None
-            )
+            for item in root.iter('record'):
+                jour = item.find('journalInfo')
+                arti = item.find('articleInfo')
 
-    def getPubYear(self, item):
-        year = item.find('pub-year')
-        return year.text
+                self.results.append( KCIPageParseResult(
+                    articleID=self.__getArticleID(arti),
+                    title=self.__getTitle(arti),
+                    authors=self.__getAuthorNames(arti),
+                    year=self.__getPubYear(jour),
+                    abstract=self.__getAbstract(arti),
+                    journal=self.__getJournal(jour),
+                    institution=self.__getInstitution(jour),
+                    volume=self.__getVolume(jour),
+                    issue=self.__getIssue(jour),
+                    fPage=self.__getFPage(arti),
+                    lPage=self.__getLPage(arti),
+                    doi=self.__getDOI(arti),
+                    url=self.__getURL(arti),
+                    citationCnt=self.__getCitationCount(arti)
+                ) )
 
-    def getTitle(self, item):
-        # 상위 엘리먼트에서부터 찾으면서 내려와야 함.
+        return self.results
+    
+    # one-based index
+    def __getPage(self, idx):
+        return self.__pages[idx - self.__basePage]
+
+    def __getItem(self, item, tag):
+        tag = item.find(tag)
+        return tag.text if tag is not None else None
+    
+    def __getArticleID(self, item):
+        return item.attrib['article-id']
+
+    def __getPubYear(self, item):
+        return self.__getItem(item, 'pub-year')
+    
+    def __getTitle(self, item):
         title_group = item.find('title-group')
         article_title = title_group.find('article-title')
         return article_title.text
     
-    def getAuthor(self, item):
+    def __getAuthorNames(self, item):
         result = []
         author_group = item.find('author-group')
         for author in author_group.findall('author'):
             result.append(author.text)
         return result
     
-    def getAbstract(self, item):
+    def __getAbstract(self, item):
         abst_group = item.find('abstract-group')
-        abst = abst_group.find('abstract')
+        return self.__getItem(abst_group, 'abstract')
+    
+    def __getDOI(self, item):
+        return self.__getItem(item, 'doi')
+    
+    def __getURL(self, item):
+        return self.__getItem(item, 'url')
+    
+    def __getCitationCount(self, item):
+        return self.__getItem(item, 'citation-count')
+    
+    def __getJournal(self, item):
+        return self.__getItem(item, 'journal-name')
+    
+    def __getVolume(self, item):
+        return self.__getItem(item, 'volume')
+    
+    def __getIssue(self, item):
+        return self.__getItem(item, 'issue')
+    
+    def __getInstitution(self, item):
+        return self.__getItem(item, 'publisher-name')
+    
+    def __getFPage(self, item):
+        return self.__getItem(item, 'fpage')
+    
+    def __getLPage(self, item):
+        return self.__getItem(item, 'lpage')
+    
+class ScopusPageParser:
+    TITLE_MODE = 0
+    AUTHOR_MODE = 1
+    JOURNAL_MODE = 2
+    INSTITUTION_MODE = 3
+    PAGE_SIZE = 20
 
-        if abst.text is None:
-            return '논문 초록이 제공되지 않습니다.'
-        else:
-            return abst.text
+    XML_NAMESPACES = {
+        'atom': 'http://www.w3.org/2005/Atom',
+        'dc': 'http://purl.org/dc/elements/1.1/',
+        'opensearch': 'http://a9.com/-/spec/opensearch/1.1/',
+        'prism': 'http://prismstandard.org/namespaces/basic/2.0/'
+    }
 
-    def getDOI(self, item):
-        doi = item.find('doi')
+    def __init__(self, searchStr, searchMode, basePage, parseCnt):
+        self.__searchStr = searchStr
+        self.__searchMode = searchMode
+        self.__basePage = basePage
+        self.__key = papery.SCOPUS_KEY
+        self.__paperDataURL = papery.SCOPUS_SCOPUS_SEARCH_URL
+        self.__pages = []
+        self.results = []
+        self.__cnt = parseCnt
 
-        if doi.text is None:
+    # short for file search
+    # expect the file to be named as @.xml#
+    # where @ is the search string and # is the page number
+    def fsearch(self):
+        i = self.__basePage
+        while True:
+            if self.__searchMode == self.TITLE_MODE:
+                file_path = papery.CACHE_PREFIX + 'scopus/title/' + self.__searchStr + '.xml' + str(i)
+            elif self.__searchMode == self.AUTHOR_MODE:
+                file_path = papery.CACHE_PREFIX + 'scopus/author/' + self.__searchStr + '.xml' + str(i)
+            elif self.__searchMode == self.JOURNAL_MODE:
+                file_path = papery.CACHE_PREFIX + 'scopus/journal/' + self.__searchStr + '.xml' + str(i)
+            elif self.__searchMode == self.INSTITUTION_MODE:
+                file_path = papery.CACHE_PREFIX + 'scopus/institution/' + self.__searchStr + '.xml' + str(i)
+            else:
+                raise ValueError('Invalid search mode')
+
+            if os.path.isfile(file_path):
+                self.__pages.append( open(file_path, 'r', encoding='utf-8').read() )
+            else:
+                break
+
+            i += 1
+
+        return self.__pages if len(self.__pages) > 0 else None
+    
+    # short for internet search
+    def isearch(self, willCache=True):
+        for i in range(self.__cnt // ScopusPageParser.PAGE_SIZE):
+            params = { 'httpAccept':'application/xml', 'apiKey': self.__key,
+                'start': (self.__basePage + i) * ScopusPageParser.PAGE_SIZE,
+                'count': ScopusPageParser.PAGE_SIZE
+            }
+
+            if self.__searchMode == self.TITLE_MODE:
+                params['query'] = 'TITLE("' + self.__searchStr + '")'
+            elif self.__searchMode == self.AUTHOR_MODE:
+                params['query'] = 'AUTH("' + self.__searchStr + '")'
+            elif self.__searchMode == self.JOURNAL_MODE:
+                params['query'] = 'SRCTITLE("' + self.__searchStr + '")'
+            elif self.__searchMode == self.INSTITUTION_MODE:
+                params['query'] = 'AFFIL("' + self.__searchStr + '")'
+            else:
+                raise ValueError('Invalid search mode')
+
+            self.__pages.append( requests.get(self.__paperDataURL, params=params).text )
+        
+        if not willCache:
+            return self.__pages
+        
+        for i, xml in enumerate(self.__pages):
+            if self.__searchMode == self.TITLE_MODE:
+                path = papery.CACHE_PREFIX + 'scopus/title/' + self.__searchStr + '.xml' + str(i + self.__basePage)
+            elif self.__searchMode == self.AUTHOR_MODE:
+                path = papery.CACHE_PREFIX + 'scopus/author/' + self.__searchStr + '.xml' + str(i + self.__basePage)
+            elif self.__searchMode == self.JOURNAL_MODE:
+                path = papery.CACHE_PREFIX + 'scopus/journal/' + self.__searchStr + '.xml' + str(i + self.__basePage)
+            elif self.__searchMode == self.INSTITUTION_MODE:
+                path = papery.CACHE_PREFIX + 'scopus/institution/' + self.__searchStr + '.xml' + str(i + self.__basePage)
+            else:
+                raise ValueError('Invalid search mode')
+            
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write(xml)
+
+        return self.__pages
+    
+    def search(self, willCache=True):
+        fResult = self.fsearch()
+        if fResult is not None:
+            return fResult
+        
+        return self.isearch(willCache)
+    
+    def parse(self):
+        for page in self.__pages:
+            root = ET.fromstring(page)
+
+            for item in root.findall('atom:entry', ScopusPageParser.XML_NAMESPACES):
+                self.results.append( ScopusPageParseResult(
+                    articleID=self.__getArticleID(item),
+                    title=self.__getTitle(item),
+                    authors=self.__getAuthorNames(item),
+                    year=self.__getPubYear(item),
+                    journal=self.__getJournal(item),
+                    institution=self.__getInstitution(item),
+                    volume=self.__getVolume(item),
+                    issue=self.__getIssue(item),
+                    fPage=self.__getFPage(item),
+                    lPage=self.__getLPage(item),
+                    doi=self.__getDOI(item),
+                    citationCnt=self.__getCitationCount(item)
+                ) )
+
+        return self.results
+    
+    def isearchAndParse(self, willCache=True):
+        self.isearch(willCache)
+        return self.parse()
+    
+    def fsearchAndParse(self):
+        self.fsearch()
+        return self.parse()
+    
+    def searchAndParse(self, willCache=True):
+        self.search(willCache)
+        return self.parse()
+    
+    def __getItem(self, item, tag):
+        tag = item.find(tag, ScopusPageParser.XML_NAMESPACES)
+        return tag.text if tag is not None else None
+
+    def __getArticleID(self, entry):
+        return self.__getItem(entry, 'atom:eid')
+    
+    def __getTitle(self, entry):
+        return self.__getItem(entry, 'dc:title')
+    
+    def __getAuthorNames(self, entry):
+        return self.__getItem(entry, 'dc:creator')
+    
+    def __getPubYear(self, entry):
+        return self.__getItem(entry, 'prism:coverDate')
+    
+    def __getJournal(self, entry):
+        return self.__getItem(entry, 'prism:publicationName')
+    
+    def __getInstitution(self, entry):
+        affList = entry.findall('atom:affiliation', ScopusPageParser.XML_NAMESPACES)
+
+        for aff in affList:
+            affName = aff.find('atom:affilname', ScopusPageParser.XML_NAMESPACES)
+            if affName is not None:
+                return affName.text
+            
+        return None
+    
+    def __getVolume(self, entry):
+        return self.__getItem(entry, 'prism:volume')
+    
+    def __getIssue(self, entry):
+        return self.__getItem(entry, 'prism:issueIdentifier')
+    
+    def __getDOI(self, entry):
+        return self.__getItem(entry, 'prism:doi')
+    
+    def __getCitationCount(self, entry):
+        return self.__getItem(entry, 'atom:citedby-count')
+    
+    def __getFPage(self, entry):
+        pr = self.__getItem(entry, 'prism:pageRange')
+        if pr is not None:
+            return pr.split('-')[0]
+        
+        return None
+    
+    def __getLPage(self, entry):
+        pr = self.__getItem(entry, 'prism:pageRange')
+        if pr is not None:
+            return pr.split('-')[1]
+        
+        return None
+    
+
+class PageParser:
+    KCI = 'KCI'
+    SCOPUS = 'Scopus'
+    TITLE_MODE = 0
+    AUTHOR_MODE = 1
+    JOURNAL_MODE = 2
+    INSTITUTION_MODE = 3
+
+    def __init__(self, searchStr, searchMode, basePage, parseCnt, source=KCI):
+        self.__KCIParser = KCIPageParser(searchStr, searchMode, basePage, parseCnt)
+        self.__source = source
+
+    def isearch(self, willCache=True):
+        if self.__source == PageParser.KCI:
+            return self.__KCIParser.isearch(willCache)
+        elif self.__source == PageParser.SCOPUS:
             return None
-        else:
-            return doi.text
+        raise ValueError('Invalid source')
 
-    def getURL(self, item):
-        url = item.find('url')
-
-        if url.text is None:
+    # short for file search
+    # expect the file to be named as @.xml#
+    # where @ is the search string and # is the page number
+    def fsearch(self):
+        if self.__source == PageParser.KCI:
+            return self.__KCIParser.fsearch()
+        elif self.__source == PageParser.SCOPUS:
             return None
-        else:
-            return url.text
+        raise ValueError('Invalid source')
+    
+    def search(self, willCache=True):
+        if self.__source == PageParser.KCI:
+            return self.__KCIParser.search(willCache)
+        elif self.__source == PageParser.SCOPUS:
+            return None
+        raise ValueError('Invalid source')
+    
+    def parse(self):
+        if self.__source == PageParser.KCI:
+            return self.__KCIParser.parse()
+        elif self.__source == PageParser.SCOPUS:
+            return None
+        raise ValueError('Invalid source')
+    
+    def isearchAndParse(self, willCache=True):
+        if self.__source == PageParser.KCI:
+            return self.__KCIParser.isearchAndParse(willCache)
+        elif self.__source == PageParser.SCOPUS:
+            return None
+        raise ValueError('Invalid source')
+    
+    def fsearchAndParse(self):
+        if self.__source == PageParser.KCI:
+            return self.__KCIParser.fsearchAndParse()
+        elif self.__source == PageParser.SCOPUS:
+            return None
+        raise ValueError('Invalid source')
+    
+    def searchAndParse(self, willCache=True):
+        if self.__source == PageParser.KCI:
+            return self.__KCIParser.searchAndParse(willCache)
+        elif self.__source == PageParser.SCOPUS:
+            return None
+        raise ValueError('Invalid source')
 
-    def getCitationCount(self, item):
-        cnt = item.find('citation-count')
-        return cnt.text
+    def getResults(self):
+        if self.__source == PageParser.KCI:
+            return self.__KCIParser.results
+        elif self.__source == PageParser.SCOPUS:
+            return None
+        raise ValueError('Invalid source')
+    
+class KCIPageParseResult:
+    def __init__(self, articleID, title, authors,
+        year, abstract ,journal, institution,
+        volume, issue, fPage, lPage, doi, url,
+        citationCnt
+    ):
+        self.articleID = articleID
+        self.title = title
+        self.authors = authors
+        self.year = year
+        self.abstract = abstract
+        self.journal = journal
+        self.institution = institution
+        self.volume = volume
+        self.issue = issue
+        self.doi = doi
+        self.url = url
+        self.citationCnt = citationCnt
+        self.fPage = fPage
+        self.lPage = lPage
+
+    def reflect(self, paper):
+        paper.title = self.title
+        paper.authors = self.authors
+        paper.year = self.year
+        paper.abstract = self.abstract
+        paper.journal = self.journal
+        paper.institution = self.institution
+        paper.volume = self.volume
+        paper.issue = self.issue
+        paper.fPage = self.fPage
+        paper.lPage = self.lPage
+        paper.doi = self.doi
+        paper.url = self.url
+        paper.citationCnt = self.citationCnt
+        paper.articleID = self.articleID
+
+class ScopusPageParseResult:
+    def __init__(self, articleID, title, authors,
+        year, journal, institution, volume, issue,
+        fPage, lPage, doi, citationCnt
+    ):
+        self.articleID = articleID
+        self.title = title
+        self.authors = authors
+        self.year = year
+        self.journal = journal
+        self.institution = institution
+        self.volume = volume
+        self.issue = issue
+        self.fPage = fPage
+        self.lPage = lPage
+        self.doi = doi
+        self.citationCnt = citationCnt
+
+    def reflect(self, paper):
+        paper.title = self.title
+        paper.authors = self.authors
+        paper.year = self.year
+        paper.journal = self.journal
+        paper.institution = self.institution
+        paper.volume = self.volume
+        paper.issue = self.issue
+        paper.fPage = self.fPage
+        paper.lPage = self.lPage
+        paper.doi = self.doi
+        paper.citationCnt = self.citationCnt
+        paper.articleID = self.articleID
+
+class KCIDetailParser:
+    def __init__(self, articleID):
+        self.__key = papery.KCI_KEY
+        self.__paperDataURL = papery.KCI_PAPER_DATA_URL
+        self.__articleID = articleID
+        self.__detail = None
+
+    # short for internet search
+    def isearch(self, willCache=True):
+        params = {'key' : self.__key, 'apiCode' : 'articleDetail',
+            'id' : self.__articleID
+        }
+        self.__detail = requests.get(self.__paperDataURL, params=params).text
+
+        if not willCache:
+            return self.__detail
+        
+        with open(papery.CACHE_PREFIX + 'kci/detail/' + self.__articleID + '.xml', 'w', encoding='utf-8') as f:
+            f.write(self.__detail)
+
+        return self.__detail
+    
+    # short for file search
+    # expect the file to be named as #.xml
+    # where # is the article ID
+    def fsearch(self):
+        file_path = papery.CACHE_PREFIX + 'kci/detail/' + self.__articleID + '.xml'
+
+        if os.path.isfile(file_path):
+            self.__detail = open(file_path, 'r', encoding='utf-8').read()
+
+        return self.__detail
+    
+    def search(self, willCache=True):
+        fResult = self.fsearch()
+        if fResult is not None:
+            return fResult
+        
+        return self.isearch(willCache)
+    
+    def parse(self):
+        refs = []
+        keywords = []
+        authorInsts = []
+
+        root = ET.fromstring(self.__detail)
+        for item in root.iter('record'):
+            arti = item.find('articleInfo')
+            ref = item.find('referenceInfo')
+
+            if ref is not None:
+                refs.extend( self.__getRefs(ref) )
+            else:
+                refs = None
+            keywords.extend( self.__getKeywords(arti) )
+            authorInsts.extend( self.__getAuthorInsts(arti) )
+
+        return KCIDetailParseResult(keywords, refs, authorInsts)
+
+    def isearchAndParse(self, willCache=True):
+        self.isearch(willCache)
+        return self.parse()
+    
+    def fsearchAndParse(self):
+        self.fsearch()
+        return self.parse()
+    
+    def searchAndParse(self, willCache=True):
+        self.search(willCache)
+        return self.parse()
+    
+    def __getItem(self, item, tag):
+        tag = item.find(tag)
+        return tag.text if tag is not None else None
+    
+    def __getKeywords(self, item):
+        result = []
+        keyword_group = item.find('keyword-group')
+        for keyword in keyword_group.findall('keyword'):
+            result.append(keyword.text)
+        return result
+    
+    def __getRefs(self, item):
+        refs = []
+
+        for ref_item in item.findall('reference'):
+            titleObj = ref_item.find('title')
+            if titleObj is not None:
+                refs.append( ref_item.attrib['type-name'] + ' | ' + titleObj.text )
+            else:
+                refs.append( ref_item.attrib['type-name'] + ' | ' + ref_item.text )
+
+        return refs if len(refs) > 0 else None
+    
+    def __getAuthorInsts(self, item):
+        result = []
+        author_group = item.find('author-group')
+
+        for author in author_group.findall('author'):
+            result.append( author.find('institution').text )
+        
+        return result
+    
+class ScopusDetailParser:
+    XML_NAMESPACES = {
+        'dn': 'http://www.elsevier.com/xml/svapi/abstract/dtd',
+        'ait': 'http://www.elsevier.com/xml/ani/ait',
+        'ce': 'http://www.elsevier.com/xml/ani/common',
+        'cto': 'http://www.elsevier.com/xml/cto/dtd',
+        'dc': 'http://purl.org/dc/elements/1.1/',
+        'prism': 'http://prismstandard.org/namespaces/basic/2.0/',
+        'xocs': 'http://www.elsevier.com/xml/xocs/dtd',
+        'xsi': 'http://www.w3.org/2001/XMLSchema-instance'
+    }
+
+    def __init__(self, articleID):
+        self.__articleID = articleID
+        self.__detail = None
+
+    def isearch(self, willCache=True):
+        params = { 'httpAccept':'text/xml', 'apiKey': papery.SCOPUS_KEY}
+        self.__detail = requests.get(
+            papery.SCOPUS_ABSTRACT_URL + '/' + self.__articleID, params=params
+        ).text
+
+        if not willCache:
+            return self.__detail
+        
+        with open(papery.CACHE_PREFIX + 'scopus/abstract/' + self.__articleID + '.xml', 'w', encoding='utf-8') as f:
+            f.write(self.__detail)
+
+        return self.__detail
+    
+    def fsearch(self):
+        file_path = papery.CACHE_PREFIX + 'scopus/abstract/' + self.__articleID + '.xml'
+
+        if os.path.isfile(file_path):
+            self.__detail = open(file_path, 'r', encoding='utf-8').read()
+
+        return self.__detail
+    
+    def search(self, willCache=True):
+        fResult = self.fsearch()
+        if fResult is not None:
+            return fResult
+        
+        return self.isearch(willCache)
+    
+    def parse(self):
+        refs = []
+        keywords = []
+        authorInsts = []
+        abstract = None
+
+        root = ET.fromstring(self.__detail)
+        coredata = root.find('dn:coredata', ScopusDetailParser.XML_NAMESPACES)
+        keywords = self.__getKeywords(coredata)
+        authorInsts = self.__getAuthorInsts(coredata)
+        abstract = self.__getAbstract(coredata)
+        refs = self.__getRefs(root)
+
+        return ScopusDetailParseResult(abstract, keywords, refs, authorInsts)
+    
+    def isearchAndParse(self, willCache=True):
+        self.isearch(willCache)
+        return self.parse()
+    
+    def fsearchAndParse(self):
+        self.fsearch()
+        return self.parse()
+    
+    def searchAndParse(self, willCache=True):
+        self.search(willCache)
+        return self.parse()
+    
+    def __getItem(self, item, tag):
+        tag = item.find(tag, ScopusDetailParser.XML_NAMESPACES)
+        return tag.text if tag is not None else None
+    
+    def __getKeywords(self, item):
+        pass
+    
+    def __getRefs(self, item):
+        pass
+    
+    def __getAuthorInsts(self, item):
+        pass
+    
+    def __getAbstract(self, item):
+        return self.__getItem(item, 'dc:description')
+    
+class DetailParser:
+    KCI = 'KCI'
+    SCOPUS = 'Scopus'
+
+    def __init__(self, articleID, source=KCI):
+        self.__KCIDetailParser = KCIDetailParser(articleID)
+        self.__source = source
+
+    def fsearch(self):
+        if self.__source == DetailParser.KCI:
+            return self.__KCIDetailParser.fsearch()
+        elif self.__source == DetailParser.SCOPUS:
+            return None
+        raise ValueError('Invalid source')
+
+    def isearch(self, willCache=True):
+        if self.__source == DetailParser.KCI:
+            return self.__KCIDetailParser.isearch(willCache)
+        elif self.__source == DetailParser.SCOPUS:
+            return None
+        raise ValueError('Invalid source')
+    
+    def parse(self):
+        if self.__source == DetailParser.KCI:
+            return self.__KCIDetailParser.parse()
+        elif self.__source == DetailParser.SCOPUS:
+            return None
+        raise ValueError('Invalid source')
+    
+    def isearchAndParse(self, willCache=True):
+        if self.__source == DetailParser.KCI:
+            return self.__KCIDetailParser.isearchAndParse(willCache)
+        elif self.__source == DetailParser.SCOPUS:
+            return None
+        raise ValueError('Invalid source')
+
+    def fsearchAndParse(self):
+        if self.__source == DetailParser.KCI:
+            return self.__KCIDetailParser.fsearchAndParse()
+        elif self.__source == DetailParser.SCOPUS:
+            return None
+        raise ValueError('Invalid source')
+
+    def searchAndParse(self, willCache=True):
+        if self.__source == DetailParser.KCI:
+            return self.__KCIDetailParser.searchAndParse(willCache)
+        elif self.__source == DetailParser.SCOPUS:
+            return None
+        raise ValueError('Invalid source')
+    
+    def getResults(self):
+        if self.__source == DetailParser.KCI:
+            return self.__KCIDetailParser.results
+        elif self.__source == DetailParser.SCOPUS:
+            return None
+        raise ValueError('Invalid source')
+    
+class KCIDetailParseResult:
+    def __init__(self, keywords, refs, authorInsts):
+        self.keywords = keywords
+        self.refs = refs
+        self.authorInsts = authorInsts
+
+    def reflect(self, paper):
+        paper.keywords = self.keywords
+        paper.refs = self.refs
+        paper.authorInsts = self.authorInsts
+
+class ScopusDetailParseResult:
+    def __init__(self, abstract, keywords, refs, authorInsts):
+        self.abstract = abstract
+        self.keywords = keywords
+        self.refs = refs
+        self.authorInsts = authorInsts
+
+    def reflect(self, paper):
+        paper.abstract = self.abstract
+        paper.keywords = self.keywords
+        paper.refs = self.refs
+        paper.authorInsts = self.authorInsts
 
 if __name__ == '__main__':
-    parser = xmlParsing(papery.KEY, "게임", papery.paperDataUrl, 1, 300)
-    parser.parse()
-    parser.printAsXML('game.xml')
+    # r = DetailParser('ART001564843').isearchAndParse()
+    # print('keywords:', r.keywords)
+    # print('references:', r.refs)
+    # print('author institutions:', r.authorInsts)
+
+    paper = Paper()
+    r = ScopusPageParser('deep learning', ScopusPageParser.TITLE_MODE, 1, 60).searchAndParse()[0].reflect(paper)
+    r = ScopusDetailParser('2-s2.0-85194579202').searchAndParse().reflect(paper)
+
+    print(paper.title)
+    print(paper.authors)
+    print(paper.year)
+    print(paper.abstract)
+    print(paper.journal)
+    print(paper.institution)
+    print(paper.volume)
+    print(paper.issue)
+    print(paper.fPage)
+    print(paper.lPage)
+    print(paper.doi)
+    print(paper.url)
+    print(paper.citationCnt)
+    print(paper.articleID)
+    print(paper.keywords)
+    print(paper.refs)

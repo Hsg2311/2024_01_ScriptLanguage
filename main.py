@@ -8,7 +8,9 @@ from LogTab import *
 from ViewTab import *
 
 from GIFAnimation import *
+from Loading import Loading
 import GuiConfig
+from save import SaveCollector
 
 from BookmarkRoot import root
 
@@ -17,6 +19,10 @@ class MainGUI:
         self.master = Tk()
         self.master.title("Papery")
         self.master.geometry(str(GuiConfig.WIDTH) + "x" + str(GuiConfig.HEIGHT))
+        self.master.withdraw()
+
+        self.saveCollector = SaveCollector()
+        self.master.protocol("WM_DELETE_WINDOW", self.onClosing)
         GuiConfig.initFonts()
 
         self.notebook = ttk.Notebook(self.master)
@@ -43,15 +49,19 @@ class MainGUI:
 
         self.notebook.bind("<<NotebookTabChanged>>", self.on_tab_changed)
 
-        self.gif = GIFAnimation(GuiConfig.GIF_WIDTH, GuiConfig.GIF_HEIGHT)
+        self.gif = GIFAnimation('res/PaperPlane.gif', GuiConfig.GIF_WIDTH, GuiConfig.GIF_HEIGHT)
+
         self.gifLabel = Label(self.master, image=self.gif.image())
         self.gifLabel.place(
             x=GuiConfig.WIDTH - GuiConfig.GIF_PADDINGX, y=GuiConfig.GIF_PADDINGY,
             anchor=NE, width=GuiConfig.GIF_WIDTH, height=GuiConfig.GIF_HEIGHT
         )
+        Loading.initGif()
 
         self.defaultbg = self.master.cget('bg')
 
+        self.master.deiconify()
+        
         self.master.after(100, self.updateGIF)
         self.master.mainloop()
 
@@ -66,6 +76,9 @@ class MainGUI:
         self.bookmarkTab.clearTreeview()
         self.bookmarkTab.updateTreeview(root)
 
+    def onClosing(self):
+        self.saveCollector.save()
+        self.master.destroy()
+
 if __name__ == "__main__":
     MainGUI()
-        
