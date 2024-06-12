@@ -27,8 +27,8 @@ public:
 	static consteval std::string_view searchType_Journal() { return "Journal"sv; }
 	static consteval std::string_view searchType_Institution() { return "Institution"sv; }
 
-	SearchLog(const std::string& keyword, const std::string& type, const std::string& timeStamp)
-		: keyword_(keyword), type_(type), timeStamp_(timeStamp)
+	SearchLog(const std::string& keyword, const std::string& type, const std::string& source, const std::string& timeStamp)
+		: keyword_(keyword), type_(type), source_(source), timeStamp_(timeStamp)
 	{
 		if (type != searchType_Title() && type != searchType_Author() && type != searchType_Journal() && type != searchType_Institution())
 			throw std::invalid_argument("Invalid search type\n"
@@ -36,8 +36,8 @@ public:
 			);
 	}
 
-	SearchLog(const std::string& keyword, const std::string& type)
-		: keyword_(keyword), type_(type), timeStamp_(mkTimeStamp())
+	SearchLog(const std::string& keyword, const std::string& type, const std::string& source)
+		: keyword_(keyword), type_(type), source_(source), timeStamp_(mkTimeStamp())
 	{
 		if (type != searchType_Title() && type != searchType_Author() && type != searchType_Journal() && type != searchType_Institution())
 			throw std::invalid_argument("Invalid search type\n"
@@ -47,25 +47,27 @@ public:
 
 	const std::string& keyword() const { return keyword_; }
 	const std::string& type() const { return type_; }
+	const std::string& source() const { return source_; }
 	const std::string& timeStamp() const { return timeStamp_; }
 
 private:
 	std::string keyword_;
 	std::string type_;
+	std::string source_;
 	std::string timeStamp_;
 };
 
 class ViewLog {
 public:
 	ViewLog(const std::string& title, const std::string& author, std::size_t year, const std::string& artiID,
-		const std::string& keyword, const std::string type, const std::string& timeStamp)
+		const std::string& keyword, const std::string type, const std::string& source, const std::string& timeStamp)
 		: title_(title), author_(author), year_(year), artiID_(artiID),
-		keyword_(keyword), type_(type), timeStamp_(timeStamp) {}
+		keyword_(keyword), type_(type), source_(source), timeStamp_(timeStamp) {}
 
 	ViewLog(const std::string& title, const std::string& author, std::size_t year, const std::string& artiID,
-		const std::string& keyword, const std::string type)
+		const std::string& keyword, const std::string type, const std::string& source)
 		: title_(title), author_(author), year_(year), artiID_(artiID),
-		keyword_(keyword), type_(type), timeStamp_(mkTimeStamp()) {}
+		keyword_(keyword), type_(type), source_(source), timeStamp_(mkTimeStamp()) {}
 
 	const std::string& title() const { return title_; }
 	const std::string& author() const { return author_; }
@@ -73,6 +75,7 @@ public:
 	const std::string& artiID() const { return artiID_; }
 	const std::string& keyword() const { return keyword_; }
 	const std::string& type() const { return type_; }
+	const std::string& source() const { return source_; }
 	const std::string& timeStamp() const { return timeStamp_; }
 
 private:
@@ -82,6 +85,7 @@ private:
 	std::string artiID_;
 	std::string keyword_;
 	std::string type_;
+	std::string source_;
 	std::string timeStamp_;
 };
 
@@ -102,13 +106,13 @@ static PyObject* loadSearchLog(PyObject* self, PyObject* args)
 
 	std::string line;
 	while (std::getline(in, line)) {
-		std::array<std::string, 3> log;
+		std::array<std::string, 4> log;
 		std::ranges::copy(line | std::views::split('|')
 			| std::views::transform([](auto&& sv) { return std::string(sv.begin(), sv.end()); }),
 			log.begin()
 		);
 
-		gSearchLog.emplace_back(log[1], log[2], log[0]);
+		gSearchLog.emplace_back(log[1], log[2], log[3], log[0]);
 	}
 
 	Py_RETURN_NONE;
@@ -124,7 +128,7 @@ static PyObject* saveSearchLog(PyObject* self, PyObject* args)
 
 	std::string line;
 	for (const auto& log : gSearchLog) {
-		line = log.timeStamp() + "|" + log.keyword() + "|" + log.type() + "\n";
+		line = log.timeStamp() + "|" + log.keyword() + "|" + log.type() + "|" + log.source() + "\n";
 		out << line;
 	}
 
@@ -145,13 +149,13 @@ static PyObject* loadViewLog(PyObject* self, PyObject* args)
 
 	std::string line;
 	while (std::getline(in, line)) {
-		std::array<std::string, 7> log;
+		std::array<std::string, 8> log;
 		std::ranges::copy(line | std::views::split('|')
 			| std::views::transform([](auto&& sv) { return std::string(sv.begin(), sv.end()); }),
 			log.begin()
 		);
 
-		gViewLog.emplace_back(log[1], log[2], std::stoi(log[3]), log[4], log[5], log[6], log[0]);
+		gViewLog.emplace_back(log[1], log[2], std::stoi(log[3]), log[4], log[5], log[6], log[7], log[0]);
 	}
 
 	Py_RETURN_NONE;
@@ -168,7 +172,7 @@ static PyObject* saveViewLog(PyObject* self, PyObject* args)
 	std::string line;
 	for (const auto& log : gViewLog) {
 		line = log.timeStamp() + "|" + log.title() + "|" + log.author() + "|" + std::to_string(log.year())
-			+ "|" + log.artiID() + "|" + log.keyword() + "|" + log.type() + "\n";
+			+ "|" + log.artiID() + "|" + log.keyword() + "|" + log.type() + "|" + log.source() + "\n";
 		out << line;
 	}
 
@@ -180,12 +184,13 @@ static PyObject* logSearch(PyObject* self, PyObject* args)
 {
 	const char* keyword = nullptr;
 	const char* type = nullptr;
+	const char* source = nullptr;
 
-	if (!PyArg_ParseTuple(args, "ss", &keyword, &type))
+	if (!PyArg_ParseTuple(args, "sss", &keyword, &type, &source))
 		return nullptr;
 
 	try {
-		gSearchLog.emplace_back(keyword, type);
+		gSearchLog.emplace_back(keyword, type, source);
 	}
 	catch (const std::exception& e) {
 		PyErr_SetString(PyExc_ValueError, e.what());
@@ -204,11 +209,12 @@ static PyObject* logView(PyObject* self, PyObject* args)
 	const char* artiID = nullptr;
 	const char* keyword = nullptr;
 	const char* type = nullptr;
+	const char* source = nullptr;
 
-	if (!PyArg_ParseTuple(args, "ssisss", &title, &author, &year, &artiID, &keyword, &type))
+	if (!PyArg_ParseTuple(args, "ssissss", &title, &author, &year, &artiID, &keyword, &type, &source))
 		return nullptr;
 
-	gViewLog.emplace_back(title, author, year, artiID, keyword, type);
+	gViewLog.emplace_back(title, author, year, artiID, keyword, type, source);
 
 	Py_RETURN_NONE;
 }
@@ -242,6 +248,7 @@ static PyObject* getSearchLog(PyObject* self, PyObject* args)
 	PyObject* dict = PyDict_New();
 	PyDict_SetItemString(dict, "keyword", PyUnicode_FromString(log.keyword().c_str()));
 	PyDict_SetItemString(dict, "type", PyUnicode_FromString(log.type().c_str()));
+	PyDict_SetItemString(dict, "source", PyUnicode_FromString(log.source().c_str()));
 	PyDict_SetItemString(dict, "timeStamp", PyUnicode_FromString(log.timeStamp().c_str()));
 
 	return dict;
@@ -270,6 +277,7 @@ static PyObject* getViewLog(PyObject* self, PyObject* args)
 	PyDict_SetItemString(dict, "artiID", PyUnicode_FromString(log.artiID().c_str()));
 	PyDict_SetItemString(dict, "keyword", PyUnicode_FromString(log.keyword().c_str()));
 	PyDict_SetItemString(dict, "type", PyUnicode_FromString(log.type().c_str()));
+	PyDict_SetItemString(dict, "source", PyUnicode_FromString(log.source().c_str()));
 	PyDict_SetItemString(dict, "timeStamp", PyUnicode_FromString(log.timeStamp().c_str()));
 
 	return dict;

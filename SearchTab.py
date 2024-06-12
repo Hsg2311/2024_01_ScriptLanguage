@@ -111,6 +111,27 @@ class SearchTab:
             anchor=NW                      
         )
 
+        self.sourceIdx = IntVar()
+        self.sourceIdx.set(0)
+
+        self.sourceKCI = Radiobutton(self.result, text="KCI", font=GuiConfig.cFont,
+            variable=self.sourceIdx, value=0
+        )
+        self.sourceKCI.place( x=GuiConfig.SEARCH_RESULT_WIDTH + GuiConfig.WIDGET_INTERVALX,
+            y=GuiConfig.SEARCH_VIEW_BUTTON_PADDINGY + GuiConfig.SEARCH_VIEW_BUTTON_HEIGHT
+                + GuiConfig.WIDGET_INTERVALY,
+            anchor=NW
+        )
+
+        self.sourceScopus = Radiobutton(self.result, text="Scopus", font=GuiConfig.cFont,
+            variable=self.sourceIdx, value=1
+        )
+        self.sourceScopus.place( x=GuiConfig.SEARCH_RESULT_WIDTH + GuiConfig.WIDGET_INTERVALX,
+            y=GuiConfig.SEARCH_VIEW_BUTTON_PADDINGY + GuiConfig.SEARCH_VIEW_BUTTON_HEIGHT
+                + GuiConfig.WIDGET_INTERVALY + GuiConfig.SEARCH_BUTTON_HEIGHT,
+            anchor=NW
+        )
+
         self.StarImage = PhotoImage(file='노란 별.png')
         self.bmButton = Button(self.result, image=self.StarImage, command=self.bookmark)
         self.bmButton.place( x=600, y=100, width=50, height=50 )
@@ -170,9 +191,20 @@ class SearchTab:
             logSearchMode = self.mainGUI.logTab.INSTITUTION_MODE
 
         def task():
-            self.mainGUI.logTab.logSearch(self.searchStr.get(), logSearchMode)
+            if self.sourceIdx.get() == 0:
+                src = Board.SEARCH_SOURCE_KCI
+            else:
+                src = Board.SEARCH_SOURCE_SCOPUS
+
+            self.mainGUI.logTab.logSearch(self.searchStr.get(), logSearchMode, src)
             self.onLoading()
-            self.board.search(self.searchStr.get(), self.searchModeIdx.get())
+
+            if self.sourceIdx.get() == 0:
+                src = Board.SEARCH_SOURCE_KCI
+            else:
+                src = Board.SEARCH_SOURCE_SCOPUS
+
+            self.board.search(self.searchStr.get(), self.searchModeIdx.get(), src)
             self.trayBasePage = 1
 
         def onCompletion(result):
@@ -272,7 +304,11 @@ class SearchTab:
             
             for rec in self.curRecords:
                 if rec.owns(item):
-                    self.mainGUI.viewTab.setPaper(rec.paper)
+                    if self.sourceIdx.get() == 0:
+                        src = Board.SEARCH_SOURCE_KCI
+                    else:
+                        src = Board.SEARCH_SOURCE_SCOPUS
+                    self.mainGUI.viewTab.setPaper(rec.paper, src)
                     break
 
             if self.searchModeIdx.get() == Board.SEARCH_MODE_TITLE:
@@ -283,9 +319,16 @@ class SearchTab:
                 logSearchMode = self.mainGUI.logTab.JOURNAL_MODE
             elif self.searchModeIdx.get() == Board.SEARCH_MODE_INSTITUTION:
                 logSearchMode = self.mainGUI.logTab.INSTITUTION_MODE
+            else:
+                raise ValueError("Invalid search mode")
+
+            if self.sourceIdx.get() == 0:
+                src = Board.SEARCH_SOURCE_KCI
+            else:
+                src = Board.SEARCH_SOURCE_SCOPUS
 
             self.mainGUI.logTab.logView(rec.paper.title, rec.paper.authors, rec.paper.year, rec.paper.articleID,
-                self.searchStr.get(), logSearchMode                           
+                self.searchStr.get(), logSearchMode, src
             )
             
         def onCompletion(result):

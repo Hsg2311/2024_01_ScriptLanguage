@@ -339,10 +339,11 @@ class ScopusPageParser:
         return self.__getItem(entry, 'dc:title')
     
     def __getAuthorNames(self, entry):
-        return self.__getItem(entry, 'dc:creator')
+        i = self.__getItem(entry, 'dc:creator')
+        return [i] if i is not None else None
     
     def __getPubYear(self, entry):
-        return self.__getItem(entry, 'prism:coverDate')
+        return self.__getItem(entry, 'prism:coverDate')[:4]
     
     def __getJournal(self, entry):
         return self.__getItem(entry, 'prism:publicationName')
@@ -364,7 +365,8 @@ class ScopusPageParser:
         return self.__getItem(entry, 'prism:issueIdentifier')
     
     def __getDOI(self, entry):
-        return self.__getItem(entry, 'prism:doi')
+        i = self.__getItem(entry, 'prism:doi')
+        return 'https://doi.org/' + i if i is not None else None
     
     def __getCitationCount(self, entry):
         return self.__getItem(entry, 'atom:citedby-count')
@@ -394,13 +396,14 @@ class PageParser:
 
     def __init__(self, searchStr, searchMode, basePage, parseCnt, source=KCI):
         self.__KCIParser = KCIPageParser(searchStr, searchMode, basePage, parseCnt)
+        self.__ScopusParser = ScopusPageParser(searchStr, searchMode, basePage, parseCnt)
         self.__source = source
 
     def isearch(self, willCache=True):
         if self.__source == PageParser.KCI:
             return self.__KCIParser.isearch(willCache)
         elif self.__source == PageParser.SCOPUS:
-            return None
+            return self.__ScopusParser.isearch(willCache)
         raise ValueError('Invalid source')
 
     # short for file search
@@ -410,49 +413,49 @@ class PageParser:
         if self.__source == PageParser.KCI:
             return self.__KCIParser.fsearch()
         elif self.__source == PageParser.SCOPUS:
-            return None
+            return self.__ScopusParser.fsearch()
         raise ValueError('Invalid source')
     
     def search(self, willCache=True):
         if self.__source == PageParser.KCI:
             return self.__KCIParser.search(willCache)
         elif self.__source == PageParser.SCOPUS:
-            return None
+            return self.__ScopusParser.search(willCache)
         raise ValueError('Invalid source')
     
     def parse(self):
         if self.__source == PageParser.KCI:
             return self.__KCIParser.parse()
         elif self.__source == PageParser.SCOPUS:
-            return None
+            return self.__ScopusParser.parse()
         raise ValueError('Invalid source')
     
     def isearchAndParse(self, willCache=True):
         if self.__source == PageParser.KCI:
             return self.__KCIParser.isearchAndParse(willCache)
         elif self.__source == PageParser.SCOPUS:
-            return None
+            return self.__ScopusParser.isearchAndParse(willCache)
         raise ValueError('Invalid source')
     
     def fsearchAndParse(self):
         if self.__source == PageParser.KCI:
             return self.__KCIParser.fsearchAndParse()
         elif self.__source == PageParser.SCOPUS:
-            return None
+            return self.__ScopusParser.fsearchAndParse()
         raise ValueError('Invalid source')
     
     def searchAndParse(self, willCache=True):
         if self.__source == PageParser.KCI:
             return self.__KCIParser.searchAndParse(willCache)
         elif self.__source == PageParser.SCOPUS:
-            return None
+            return self.__ScopusParser.searchAndParse(willCache)
         raise ValueError('Invalid source')
 
     def getResults(self):
         if self.__source == PageParser.KCI:
             return self.__KCIParser.results
         elif self.__source == PageParser.SCOPUS:
-            return None
+            return self.__ScopusParser.results
         raise ValueError('Invalid source')
     
 class KCIPageParseResult:
@@ -673,11 +676,6 @@ class ScopusDetailParser:
         return self.isearch(willCache)
     
     def parse(self):
-        refs = []
-        keywords = []
-        authorInsts = []
-        abstract = None
-
         root = ET.fromstring(self.__detail)
         coredata = root.find('dn:coredata', ScopusDetailParser.XML_NAMESPACES)
         keywords = self.__getKeywords(coredata)
@@ -704,13 +702,13 @@ class ScopusDetailParser:
         return tag.text if tag is not None else None
     
     def __getKeywords(self, item):
-        pass
+        return None
     
     def __getRefs(self, item):
-        pass
+        return None
     
     def __getAuthorInsts(self, item):
-        pass
+        return None
     
     def __getAbstract(self, item):
         return self.__getItem(item, 'dc:description')
@@ -721,55 +719,56 @@ class DetailParser:
 
     def __init__(self, articleID, source=KCI):
         self.__KCIDetailParser = KCIDetailParser(articleID)
+        self.__ScopusDetailParser = ScopusDetailParser(articleID)
         self.__source = source
 
     def fsearch(self):
         if self.__source == DetailParser.KCI:
             return self.__KCIDetailParser.fsearch()
         elif self.__source == DetailParser.SCOPUS:
-            return None
+            return self.__ScopusDetailParser.fsearch()
         raise ValueError('Invalid source')
 
     def isearch(self, willCache=True):
         if self.__source == DetailParser.KCI:
             return self.__KCIDetailParser.isearch(willCache)
         elif self.__source == DetailParser.SCOPUS:
-            return None
+            return self.__ScopusDetailParser.isearch(willCache)
         raise ValueError('Invalid source')
     
     def parse(self):
         if self.__source == DetailParser.KCI:
             return self.__KCIDetailParser.parse()
         elif self.__source == DetailParser.SCOPUS:
-            return None
+            return self.__ScopusDetailParser.parse()
         raise ValueError('Invalid source')
     
     def isearchAndParse(self, willCache=True):
         if self.__source == DetailParser.KCI:
             return self.__KCIDetailParser.isearchAndParse(willCache)
         elif self.__source == DetailParser.SCOPUS:
-            return None
+            return self.__ScopusDetailParser.isearchAndParse(willCache)
         raise ValueError('Invalid source')
 
     def fsearchAndParse(self):
         if self.__source == DetailParser.KCI:
             return self.__KCIDetailParser.fsearchAndParse()
         elif self.__source == DetailParser.SCOPUS:
-            return None
+            return self.__ScopusDetailParser.fsearchAndParse()
         raise ValueError('Invalid source')
 
     def searchAndParse(self, willCache=True):
         if self.__source == DetailParser.KCI:
             return self.__KCIDetailParser.searchAndParse(willCache)
         elif self.__source == DetailParser.SCOPUS:
-            return None
+            return self.__ScopusDetailParser.searchAndParse(willCache)
         raise ValueError('Invalid source')
     
     def getResults(self):
         if self.__source == DetailParser.KCI:
             return self.__KCIDetailParser.results
         elif self.__source == DetailParser.SCOPUS:
-            return None
+            return self.__ScopusDetailParser.results
         raise ValueError('Invalid source')
     
 class KCIDetailParseResult:
