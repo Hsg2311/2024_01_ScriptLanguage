@@ -7,6 +7,9 @@ class Node:
         self.children.append(node)
         node.parent = self
 
+    def compare(self, key):
+        return self.key == key
+
     def delete(self, node):
         if node not in self.children:
             return
@@ -19,15 +22,25 @@ class Node:
         if self.parent is not None:
             self.parent.delete(self)
 
+class Root(Node):
+    def __init__(self):
+        super().__init__()
+
 class Category(Node):
     def __init__(self, name):
         super().__init__()
         self.name = name
 
+    def owns(self, name):
+        return self.name == name
+
 class BookmarkItem(Node):
     def __init__(self, paper):
         super().__init__()
         self.paper = paper
+
+    def owns(self, title):
+        return self.paper.title == title
 
 def traverse(node, indentLevel=0):
     print("    " * indentLevel, end="")
