@@ -71,16 +71,16 @@ class MemoTab:
         self.loadXML()
 
         self.addButton = Button(self.frame, text="+", command=self.addMemo)
-        self.addButton.place(x=700, y=40, width=60, height=50)
+        self.addButton.place(x=660, y=40, width=60, height=50)
 
         self.delButton = Button(self.frame, text="-", command=self.delMemo)
-        self.delButton.place(x=700, y=90, width=60, height=50)
+        self.delButton.place(x=660, y=90, width=60, height=50)
 
         self.mailButton = Button(self.frame, command=self.mail, image=self.gmailIcon)
-        self.mailButton.place(x=700, y=200, width=60, height=50)
+        self.mailButton.place(x=660, y=200, width=60, height=50)
 
         self.sendButton = Button(self.frame, command=self.send, image=self.telegramIcon)
-        self.sendButton.place(x=700, y=260, width=60, height=50)
+        self.sendButton.place(x=660, y=260, width=60, height=50)
 
     def loadXML(self):
         try:
