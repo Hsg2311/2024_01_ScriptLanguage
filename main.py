@@ -12,6 +12,8 @@ from Loading import Loading
 import GuiConfig
 from save import SaveCollector
 
+from BookmarkRoot import root
+
 class MainGUI:
     def __init__(self):
         self.master = Tk()
@@ -45,7 +47,10 @@ class MainGUI:
 
         self.notebook.hide(self.viewTab.frame)
 
+        self.notebook.bind("<<NotebookTabChanged>>", self.on_tab_changed)
+
         self.gif = GIFAnimation('res/PaperPlane.gif', GuiConfig.GIF_WIDTH, GuiConfig.GIF_HEIGHT)
+
         self.gifLabel = Label(self.master, image=self.gif.image())
         self.gifLabel.place(
             x=GuiConfig.WIDTH - GuiConfig.GIF_PADDINGX, y=GuiConfig.GIF_PADDINGY,
@@ -64,6 +69,12 @@ class MainGUI:
         self.gif.advance()
         self.gifLabel.configure(image=self.gif.image())
         self.master.after(100, self.updateGIF)
+
+    def on_tab_changed(self, event):
+        global root
+
+        self.bookmarkTab.clearTreeview()
+        self.bookmarkTab.updateTreeview(root)
 
     def onClosing(self):
         self.saveCollector.save()

@@ -211,7 +211,7 @@ class ViewTab:
         self.paper.setHasMemo()
 
         memoStr='\n\n[Paper] ' + ' | '.join(
-            [self.paper.title, self.paper.author, self.paper.year]
+            [self.paper.title, ', '.join(self.paper.authors), self.paper.year]
         )
 
         self.mainGUI.memoTab.addMemo(memoStr)
