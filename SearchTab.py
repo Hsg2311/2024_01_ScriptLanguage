@@ -232,9 +232,16 @@ class SearchTab:
 
     def addCategory(self):
         global root
+
         name = simpledialog.askstring("카테고리 이름 설정", "카테고리 이름을 입력하세요:")
+        if self.findCategory(root, name):
+            messagebox.showinfo('알림', '이미 존재하는 카테고리입니다.')
+            return
+        
         c = bookmark.Category(name)
         self.insertNode(c, root)
+
+        self.updateSearchTab()
 
     def delCategory(self):
         global root
@@ -244,6 +251,8 @@ class SearchTab:
             self.findCategory(root, selected_item[0]).destroy()
             self.tree.delete(selected_item)
 
+        self.updateSearchTab()
+
     def changeItemName(self):
         selected_item = self.tree.selection()
         if selected_item:  # 선택된 아이템이 있는지 확인
@@ -251,6 +260,8 @@ class SearchTab:
             if new_name:  # 사용자가 이름을 입력하고 'OK'를 누른 경우
                 self.findCategory(root, selected_item[0]).name = new_name
                 self.tree.item(selected_item[0], text=new_name)  # 선택된 아이템의 이름을 새로운 이름으로 변경
+
+        self.updateSearchTab()
 
     def updateTreeview(self, node, parent = None):
         if isinstance(node, bookmark.Root):
@@ -273,6 +284,16 @@ class SearchTab:
         for child in node.children:
             self.updateTreeview(child, node)
 
+    def clearTreeview(self):
+        for item in self.tree.get_children():
+            self.tree.delete(item) 
+
+    def updateSearchTab(self):
+        global root
+
+        self.clearTreeview()
+        self.updateTreeview(root)
+
     def addPaper(self):
         global root
         s = ''.join(self.tree.selection())
@@ -281,6 +302,8 @@ class SearchTab:
         if c is not None:
             bi = bookmark.BookmarkItem(self.selected_paper)
             self.insertNode(bi, c)
+
+        self.updateSearchTab()
         
     def findCategory(self, node, name):
         for child in node.children:

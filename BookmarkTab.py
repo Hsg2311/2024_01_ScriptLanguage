@@ -23,6 +23,9 @@ class BookmarkTab:
 
         self.tree = ttk.Treeview(self.frame)
         self.tree.place(x=50, y=50, width=500, height=400)
+        vScrollbar = ttk.Scrollbar(self.frame, orient='vertical', command=self.tree.yview)
+        self.tree.configure(yscrollcommand=vScrollbar.set)
+        vScrollbar.place(x=550, y=50, width=20, height=400)
 
         self.addButton = Button(self.frame, text='카테고리 추가', command=self.addCategory)
         self.addButton.place(x=600, y=150, width=90, height=30)
@@ -35,7 +38,7 @@ class BookmarkTab:
         delPaperButton.place(x=600, y=330, width=65, height=30)
         viewButton = Button(self.frame, text='보기', command=self.view)
         viewButton.place(x=600, y=400, width=50, height=30)
-        viewCitation = Button(self.frame, text='인용수', command=self.viewCitationCnt)
+        viewCitation = Button(self.frame, text='인용 수', command=self.viewCitationCnt)
         viewCitation.place(x=600, y=470, width=50, height=30)
 
         # self.insertNode(BookmarkRoot)
@@ -86,9 +89,16 @@ class BookmarkTab:
 
     def addCategory(self):
         global root
+
         name = simpledialog.askstring("카테고리 이름 설정", "카테고리 이름을 입력하세요:")
+        if self.findCategory(root, name):
+            messagebox.showinfo('알림', '이미 존재하는 카테고리입니다.')
+            return
+        
         c = bookmark.Category(name)
         self.insertNode(c, root)
+
+        self.update()
 
     def delCategory(self):
         global root
@@ -97,15 +107,20 @@ class BookmarkTab:
         if selected_item:
             self.findCategory(root, selected_item[0]).destroy()
             self.tree.delete(selected_item)
-            
+        
+        self.update()
 
     def changeItemName(self):
+        global root
+
         selected_item = self.tree.selection()
         if selected_item:  # 선택된 아이템이 있는지 확인
             new_name = simpledialog.askstring("카테고리 이름 변경", "새 이름을 입력하세요:")
             if new_name:  # 사용자가 이름을 입력하고 'OK'를 누른 경우
                 self.findCategory(root, selected_item[0]).name = new_name
                 self.tree.item(selected_item[0], text=new_name)  # 선택된 아이템의 이름을 새로운 이름으로 변경
+
+        self.update()
 
     def updateTreeview(self, node, parent = None):
         if isinstance(node, bookmark.Root):
@@ -140,6 +155,8 @@ class BookmarkTab:
             self.findBookmarkItem(root, selected_item[0]).destroy()
             self.tree.delete(selected_item[0])
 
+        self.update()
+
     def view(self):
         global root
         
@@ -157,7 +174,7 @@ class BookmarkTab:
 
         if category:
             new_window = Toplevel(self.mainGUI.master)
-            new_window.title('인용수 보기')
+            new_window.title('인용 수 보기')
             new_window.geometry('800x600+100+100')
 
             listbox = Listbox(new_window)
@@ -170,18 +187,16 @@ class BookmarkTab:
                     citations.append(0)
                     continue
                 citations.append(int(category.children[i].paper.citationCnt))
-            for i in citations:
-                print(type(i), ' ', i)
 
-            listbox.place(x=0, y=0, width=200, height=200)
+            listbox.place(x=0, y=0, width=200, height=500)
             
             vScrollbar = ttk.Scrollbar(new_window, orient='vertical', command=listbox.yview)
             listbox.configure(yscrollcommand=vScrollbar.set)
-            vScrollbar.place(x=200, y=0, width=20, height=200)
+            vScrollbar.place(x=200, y=0, width=20, height=500)
 
             hScrollbar = ttk.Scrollbar(new_window, orient='horizontal', command=listbox.xview)
             listbox.configure(xscrollcommand=hScrollbar.set)
-            hScrollbar.place(x=0, y=200, width=200, height=20)
+            hScrollbar.place(x=0, y=500, width=200, height=20)
 
             canvas = Canvas(new_window, bg='white', width=600, height= 500)
             canvas.place(x=220, y=0, width=580, height=500)
@@ -194,13 +209,26 @@ class BookmarkTab:
             maxCitation = max(citations)
             step = 50
             for i in range(len(category.children)):
-                canvas.create_rectangle(20+(i*step)+i*barWidth, height-(height-200)*citations[i]/maxCitation,
-                                        20+(i*step)+(i+1)*barWidth, height-40)
+                y0 = (height-40)-(height-60)*citations[i]/maxCitation
+
+                if y0 > (height-40):
+                    canvas.create_rectangle(20+(i*step)+i*barWidth, height-40,
+                                            20+(i*step)+(i+1)*barWidth, height-40)
+                    canvas.create_text(35+(i*step)+i*barWidth, height-50, text=str(citations[i]))
+                else:
+                    canvas.create_rectangle(20+(i*step)+i*barWidth, y0, 20+(i*step)+(i+1)*barWidth, height-40)
+                    canvas.create_text(35+(i*step)+i*barWidth, y0-10, text=str(citations[i]))
+
                 canvas.create_text(35+(i*step)+i*barWidth, height-20, text=str(i+1)+'번\n논문')
-                canvas.create_text(35+(i*step)+i*barWidth, height-(height-200)*citations[i]/maxCitation-10, text=str(citations[i]))
 
             self.frame.update()
             canvas.configure(scrollregion=canvas.bbox('all'))
+
+    def update(self):
+        global root
+
+        self.clearTreeview()
+        self.updateTreeview(root)
 
 def expandAllItems(tree, item=''):
     for child in tree.get_children(item):
