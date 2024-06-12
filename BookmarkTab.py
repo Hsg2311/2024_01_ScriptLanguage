@@ -161,9 +161,17 @@ class BookmarkTab:
             new_window.geometry('800x600+100+100')
 
             listbox = Listbox(new_window)
+            citations = []
             
             for i in range(len(category.children)-1, -1, -1):
                 listbox.insert(0, str(i+1)+'. '+category.children[i].paper.title)
+            for i in range(len(category.children)):
+                if category.children[i].paper.citationCnt == None:
+                    citations.append(0)
+                    continue
+                citations.append(int(category.children[i].paper.citationCnt))
+            for i in citations:
+                print(type(i), ' ', i)
 
             listbox.place(x=0, y=0, width=200, height=200)
             
@@ -181,6 +189,18 @@ class BookmarkTab:
             canvas.configure(xscrollcommand=hCanvasScrollbar.set)
             hCanvasScrollbar.place(x=220, y=500, width=580, height=20)
             
+            barWidth = (580-20)/20
+            height = 500
+            maxCitation = max(citations)
+            step = 50
+            for i in range(len(category.children)):
+                canvas.create_rectangle(20+(i*step)+i*barWidth, height-(height-200)*citations[i]/maxCitation,
+                                        20+(i*step)+(i+1)*barWidth, height-40)
+                canvas.create_text(35+(i*step)+i*barWidth, height-20, text=str(i+1)+'번\n논문')
+                canvas.create_text(35+(i*step)+i*barWidth, height-(height-200)*citations[i]/maxCitation-10, text=str(citations[i]))
+
+            self.frame.update()
+            canvas.configure(scrollregion=canvas.bbox('all'))
 
 def expandAllItems(tree, item=''):
     for child in tree.get_children(item):
