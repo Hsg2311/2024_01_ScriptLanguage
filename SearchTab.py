@@ -105,7 +105,7 @@ class SearchTab:
         self.pageTrayButtons = [None] * Board.PAGE_CNT_IN_A_TRAY
 
         self.viewButton = Button(self.result, text="View", font=GuiConfig.cFont, command=self.view)
-        self.viewButton.place( x=GuiConfig.SEARCH_RESULT_WIDTH + GuiConfig.WIDGET_INTERVALX + 100,
+        self.viewButton.place( x=GuiConfig.SEARCH_RESULT_WIDTH + GuiConfig.WIDGET_INTERVALX,
             y=GuiConfig.SEARCH_VIEW_BUTTON_PADDINGY,
             width=GuiConfig.SEARCH_VIEW_BUTTON_WIDTH, height=GuiConfig.SEARCH_VIEW_BUTTON_HEIGHT,
             anchor=NW                      
@@ -118,7 +118,7 @@ class SearchTab:
             variable=self.sourceIdx, value=0
         )
         self.sourceKCI.place( x=GuiConfig.SEARCH_RESULT_WIDTH + GuiConfig.WIDGET_INTERVALX,
-            y=GuiConfig.SEARCH_VIEW_BUTTON_PADDINGY + GuiConfig.SEARCH_VIEW_BUTTON_HEIGHT
+            y=GuiConfig.SEARCH_VIEW_BUTTON_PADDINGY + GuiConfig.SEARCH_VIEW_BUTTON_HEIGHT + 100
                 + GuiConfig.WIDGET_INTERVALY,
             anchor=NW
         )
@@ -128,13 +128,13 @@ class SearchTab:
         )
         self.sourceScopus.place( x=GuiConfig.SEARCH_RESULT_WIDTH + GuiConfig.WIDGET_INTERVALX,
             y=GuiConfig.SEARCH_VIEW_BUTTON_PADDINGY + GuiConfig.SEARCH_VIEW_BUTTON_HEIGHT
-                + GuiConfig.WIDGET_INTERVALY + GuiConfig.SEARCH_BUTTON_HEIGHT,
+                + GuiConfig.WIDGET_INTERVALY + GuiConfig.SEARCH_BUTTON_HEIGHT + 100,
             anchor=NW
         )
 
         self.StarImage = PhotoImage(file='노란 별.png')
         self.bmButton = Button(self.result, image=self.StarImage, command=self.bookmark)
-        self.bmButton.place( x=600, y=100, width=50, height=50 )
+        self.bmButton.place( x=GuiConfig.SEARCH_RESULT_WIDTH + GuiConfig.WIDGET_INTERVALX, y=100, width=50, height=50 )
 
     def bookmark(self):
         item = self.resultList.focus_get()
