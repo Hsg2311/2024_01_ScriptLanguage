@@ -218,11 +218,17 @@ class ViewTab:
         self.mainGUI.notebook.select(self.mainGUI.memoTab.frame)
 
     def summarize(self):
+        def task():
+            return self.summarizer.summarize(self.paper.title, self.paper.abstract)
+        
+        def onCompletion(result):
+            messagebox.showinfo("요약", result)
+
         if self.paper is None:
             messagebox.showinfo("요약", "요약할 논문이 없습니다.")
             return
         
-        messagebox.showinfo("요약", self.summarizer.summarize(self.paper.title, self.paper.abstract))
+        Loading(self.master, task, onCompletion)
 
     def cite(self):
         if self.paper is None:
