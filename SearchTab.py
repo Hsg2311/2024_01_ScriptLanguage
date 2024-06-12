@@ -101,6 +101,27 @@ class SearchTab:
             anchor=NW                      
         )
 
+        self.sourceIdx = IntVar()
+        self.sourceIdx.set(0)
+
+        self.sourceKCI = Radiobutton(self.result, text="KCI", font=GuiConfig.cFont,
+            variable=self.sourceIdx, value=0
+        )
+        self.sourceKCI.place( x=GuiConfig.SEARCH_RESULT_WIDTH + GuiConfig.WIDGET_INTERVALX,
+            y=GuiConfig.SEARCH_VIEW_BUTTON_PADDINGY + GuiConfig.SEARCH_VIEW_BUTTON_HEIGHT
+                + GuiConfig.WIDGET_INTERVALY,
+            anchor=NW
+        )
+
+        self.sourceScopus = Radiobutton(self.result, text="Scopus", font=GuiConfig.cFont,
+            variable=self.sourceIdx, value=1
+        )
+        self.sourceScopus.place( x=GuiConfig.SEARCH_RESULT_WIDTH + GuiConfig.WIDGET_INTERVALX,
+            y=GuiConfig.SEARCH_VIEW_BUTTON_PADDINGY + GuiConfig.SEARCH_VIEW_BUTTON_HEIGHT
+                + GuiConfig.WIDGET_INTERVALY + GuiConfig.SEARCH_BUTTON_HEIGHT,
+            anchor=NW
+        )
+
     def search(self):
         if self.searchModeIdx.get() == Board.SEARCH_MODE_TITLE:
             logSearchMode = self.mainGUI.logTab.TITLE_MODE
