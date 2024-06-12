@@ -7,6 +7,7 @@ from xml.dom import minidom
 import GuiConfig
 import papery
 from save import SaveCollector
+import telepot
 
 # smtp 정보
 host = "smtp.gmail.com" # Gmail SMTP 서버 주소.
@@ -181,7 +182,23 @@ class MemoTab:
         MailDialog(toMail, self.master)
 
     def send(self):
-        pass
+        bot = telepot.Bot(papery.TELEGRAM_BOT_TOKEN)
+        toSendWidget = self.grids.focus_get()
+
+        toSend = None
+        for memo in self.memos:
+            if memo.owns(toSendWidget):
+                toSend = memo
+                break
+
+        if toSend == None:
+            messagebox.showinfo("Telegram", "Select a memo to send")
+            return
+        
+        toSend.update()
+        bot.sendMessage(papery.TELEGRAM_CHAT_ID, toSend.text)
+
+        messagebox.showinfo("Telegram", "Message sent")
 
 import mysmtplib
 from email.mime.multipart import MIMEMultipart
