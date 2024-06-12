@@ -679,7 +679,7 @@ class ScopusDetailParser:
         abstract = None
 
         root = ET.fromstring(self.__detail)
-        coredata = root.find('db:coredata', ScopusDetailParser.XML_NAMESPACES)
+        coredata = root.find('dn:coredata', ScopusDetailParser.XML_NAMESPACES)
         keywords = self.__getKeywords(coredata)
         authorInsts = self.__getAuthorInsts(coredata)
         abstract = self.__getAbstract(coredata)
@@ -802,4 +802,23 @@ if __name__ == '__main__':
     # print('references:', r.refs)
     # print('author institutions:', r.authorInsts)
 
-    r = ScopusPageParser('deep learning', ScopusPageParser.TITLE_MODE, 1, 60).searchAndParse()
+    paper = Paper()
+    r = ScopusPageParser('deep learning', ScopusPageParser.TITLE_MODE, 1, 60).searchAndParse()[0].reflect(paper)
+    r = ScopusDetailParser('2-s2.0-85194579202').searchAndParse().reflect(paper)
+
+    print(paper.title)
+    print(paper.authors)
+    print(paper.year)
+    print(paper.abstract)
+    print(paper.journal)
+    print(paper.institution)
+    print(paper.volume)
+    print(paper.issue)
+    print(paper.fPage)
+    print(paper.lPage)
+    print(paper.doi)
+    print(paper.url)
+    print(paper.citationCnt)
+    print(paper.articleID)
+    print(paper.keywords)
+    print(paper.refs)
