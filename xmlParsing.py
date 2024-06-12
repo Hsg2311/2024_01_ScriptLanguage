@@ -574,7 +574,10 @@ class KCIDetailParser:
             arti = item.find('articleInfo')
             ref = item.find('referenceInfo')
 
-            refs.extend( self.__getRefs(ref) )
+            if ref is not None:
+                refs.extend( self.__getRefs(ref) )
+            else:
+                refs = None
             keywords.extend( self.__getKeywords(arti) )
             authorInsts.extend( self.__getAuthorInsts(arti) )
 
