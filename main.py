@@ -10,12 +10,17 @@ from ViewTab import *
 from GIFAnimation import *
 from Loading import Loading
 import GuiConfig
+from save import SaveCollector
 
 class MainGUI:
     def __init__(self):
         self.master = Tk()
         self.master.title("Papery")
         self.master.geometry(str(GuiConfig.WIDTH) + "x" + str(GuiConfig.HEIGHT))
+        self.master.withdraw()
+
+        self.saveCollector = SaveCollector()
+        self.master.protocol("WM_DELETE_WINDOW", self.onClosing)
         GuiConfig.initFonts()
 
         self.notebook = ttk.Notebook(self.master)
@@ -50,6 +55,8 @@ class MainGUI:
 
         self.defaultbg = self.master.cget('bg')
 
+        self.master.deiconify()
+        
         self.master.after(100, self.updateGIF)
         self.master.mainloop()
 
@@ -58,6 +65,9 @@ class MainGUI:
         self.gifLabel.configure(image=self.gif.image())
         self.master.after(100, self.updateGIF)
 
+    def onClosing(self):
+        self.saveCollector.save()
+        self.master.destroy()
+
 if __name__ == "__main__":
     MainGUI()
-        
