@@ -4,6 +4,10 @@ import GuiConfig
 import webbrowser
 from summary import Summarizer
 from xmlParsing import DetailParser
+from tkintermapview import TkinterMapView
+import requests
+from Loading import Loading
+import papery
 
 class ViewTab:
     def __init__(self, mainGUI):
@@ -154,6 +158,12 @@ class ViewTab:
         ) )
         self.buttons[-1].grid(row=6, column=0, sticky='nsew', pady=GuiConfig.WIDGET_INTERVALY // 2)
 
+        # row 7 - map button
+        self.buttons.append( Button(self.buttonsFrame, text="지도",
+            font=GuiConfig.cFont, command=self.map
+        ) )
+        self.buttons[-1].grid(row=7, column=0, sticky='nsew', pady=GuiConfig.WIDGET_INTERVALY // 2)
+
         for i in range(len(self.buttons)):
             self.buttonsFrame.rowconfigure(i, weight=1)
         self.buttonsFrame.columnconfigure(0, weight=1)
@@ -218,6 +228,19 @@ class ViewTab:
     def bookmark(self):
         pass
 
+    def map(self):
+        if self.paper is None:
+            messagebox.showinfo("지도", "지도에 표시할 논문이 없습니다.")
+            return
+
+        def task():
+            MapWindow(self.master, self.paper)
+
+        def onCompletion(result):
+            pass
+
+        Loading(self.master, task, onCompletion)
+
 import clipboard
 
 class CiteDialog:
@@ -272,3 +295,67 @@ class CiteDialog:
     def makeChicagoCitation(self):
         return self.paper.author + '. "' + self.paper.title + '." (' + self.paper.year + ')'
         # return self.paper.author + '. "' + self.paper.title + '." ' + self.paper.journal + ' ' + self.paper.volume + ', no. ' + self.paper.issue + ' (' + self.paper.year + '): ' + self.paper.pages + '.'
+
+class MapWindow:
+    def __init__(self, master, paper):
+        self.master = master
+        self.paper = paper
+
+        self.frame = Toplevel(master)
+        self.frame.title("지도")
+        self.frame.geometry("600x400")
+        self.frame.resizable(False, False)
+
+        self.gmap_widget = TkinterMapView(self.frame, width=600, height=400)
+        self.gmap_widget.pack(fill=BOTH)
+
+        self.gmap_widget.set_tile_server(
+            "https://mt0.google.com/vt/lyrs=m&hl=kr&x={x}&y={y}&z={z}&s=Ga", max_zoom=22
+        )
+
+        insti = self.paper.authors[0][self.paper.authors[0].find('('):]
+        if insti == self.paper.authors[0][-1]:
+            insti = None
+        else:
+            insti = insti[1:-1]
+
+        if insti is None:
+            self.marker = self.gmap_widget.set_position(0, 0, marker=True)
+            self.marker.set_text("기관 정보가 제공되지 않습니다.")
+        else:
+            self.marker = self.gmap_widget.set_address(insti, marker=True)
+            if self.marker is not False:
+                self.marker.set_text(insti)
+            else:
+                lat, lng = self.get_lat_lng(insti, papery.KAKAO_MAP_API_KEY)
+                if lat is not None and lng is not None:
+                    self.marker = self.gmap_widget.set_position(lat, lng, marker=True)
+                    self.marker.set_text(insti)
+                else:
+                    self.marker = self.gmap_widget.set_position(0, 0, marker=True)
+                    self.marker.set_text("위치 정보를 찾을 수 없습니다.")
+
+        self.gmap_widget.set_zoom(16)
+
+    def get_lat_lng(self, address, api_key):
+        url = 'https://dapi.kakao.com/v2/local/search/address.json'
+        headers = {
+            'Authorization': f'KakaoAK {api_key}'
+        }
+        params = {
+            'query': address
+        }
+        
+        response = requests.get(url, headers=headers, params=params)
+        
+        if response.status_code == 200:
+            result = response.json()
+            if result['documents']:
+                address_info = result['documents'][0]
+                lat = address_info['y']
+                lng = address_info['x']
+                return lat, lng
+            else:
+                return None, None
+        else:
+            raise Exception(f"Error {response.status_code}: {response.text}")

@@ -6,5 +6,6 @@ SCOPUS_ABSTRACT_URL = 'http://api.elsevier.com/content/abstract/eid'
 KCI_KEY = os.environ['PAPER_API_KCI_KEY']
 SCOPUS_KEY = os.environ['PAPER_API_SCOPUS_KEY']
 CACHE_PREFIX = 'cache/'
+KAKAO_MAP_API_KEY = os.environ['KAKAO_MAP_API_KEY']
 
 parseCnt = 100
